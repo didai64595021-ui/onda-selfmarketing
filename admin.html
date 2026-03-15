@@ -284,6 +284,7 @@
 </div>
 
 <script src="config.js"></script>
+<script src="event-hub.js"></script>
 <script>
 // Auth
 const ADMIN_PIN = '0000'; // 변경 필요
@@ -341,6 +342,12 @@ async function loadOverview() {
       <div class="kpi-card"><div class="value">${hl.unsent||0}</div><div class="label">미발송 핫리드</div></div>
       <div class="kpi-card"><div class="value">${r.this_month?Math.round(r.this_month/10000)+'만':'0'}</div><div class="label">이번달 매출</div></div>
       <div class="kpi-card"><div class="value" style="color:${c.at_risk>0?'#dc3545':'var(--accent)'}">${c.at_risk||0}</div><div class="label">위험 고객</div></div>`;
+
+    // 카카오 인증 대기 수
+    const pendingKakao = await sbQuery('sm_customers?kakao_verified=eq.false&kakao_verify_code=not.is.null&select=id').catch(()=>[]);
+    if (pendingKakao.length) {
+      document.getElementById('kpiRow').innerHTML += `<div class="kpi-card"><div class="value" style="color:#FFA000">${pendingKakao.length}</div><div class="label">💛 카카오 인증 대기</div></div>`;
+    }
 
     document.getElementById('sideLeads').textContent = hl.unsent || 0;
 

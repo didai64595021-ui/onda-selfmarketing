@@ -92,6 +92,7 @@
 
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script src="event-hub.js"></script>
 <script>
 let customers = [];
 let curFilter = 'all';
@@ -135,13 +136,14 @@ function renderCustomers() {
       <td><strong>${c.store_name}</strong>${c.notes?'<br><small style="color:var(--gray-500)">'+c.notes.substring(0,30)+'</small>':''}</td>
       <td>${c.keyword}</td>
       <td>${c.package ? {starter:'스타터',growth:'그로스',pro:'프로',review_only:'리뷰'}[c.package] : '-'}</td>
-      <td><span class="status-badge ${statusColors[c.status]||''}">${statusMap[c.status]||c.status}</span></td>
+      <td><span class="status-badge ${statusColors[c.status]||''}">${statusMap[c.status]||c.status}</span>${c.kakao_verified?'<span style="margin-left:4px" title="카카오 인증됨">💛</span>':c.kakao_verify_code?'<span style="margin-left:4px;opacity:0.4" title="카카오 인증 대기">💛</span>':''}</td>
       <td>${c.churn_risk_score > 60 ? '🔴' : c.churn_risk_score > 30 ? '🟡' : '🟢'} ${c.churn_risk_score}</td>
       <td>${c.contact}</td>
       <td>${new Date(c.created_at).toLocaleDateString('ko')}</td>
       <td>
         <button onclick="editCust(${c.id})" style="padding:4px 8px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:12px">✏️</button>
         <button onclick="viewEvents(${c.id})" style="padding:4px 8px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:12px">📋</button>
+        ${c.kakao_verify_code && !c.kakao_verified ? `<button onclick="verifyKakao(${c.id},'${c.kakao_verify_code}')" style="padding:4px 8px;border-radius:6px;border:1px solid #FEE500;background:#FEE500;cursor:pointer;font-size:12px" title="카카오 인증 처리">💛</button>` : ''}
         <select onchange="changeStatus(${c.id}, this.value)" style="padding:2px 4px;font-size:12px;border-radius:4px;border:1px solid var(--gray-200)">
           ${Object.entries(statusMap).map(([k,v]) => `<option value="${k}" ${c.status===k?'selected':''}>${v}</option>`).join('')}
         </select>
@@ -199,8 +201,22 @@ async function saveCust(e) {
 }
 
 async function changeStatus(id, newStatus) {
-  try { await sbRpc('transition_customer', { cust_id: id, new_status: newStatus }); loadCustomers(); }
-  catch(e) { console.error(e); }
+  try {
+    await sbRpc('transition_customer', { cust_id: id, new_status: newStatus });
+    // 이벤트 체인 발동
+    if (newStatus === 'active') await EventHub.emit('onboarding_completed', { entity_type:'customer' }, id);
+    if (newStatus === 'at_risk') await EventHub.emit('churn_risk_detected', { entity_type:'customer', risk_score:70 }, id);
+    if (newStatus === 'churned') await EventHub.emit('customer_churned', { entity_type:'customer' }, id);
+    if (newStatus === 'onboarding') await EventHub.emit('trial_converted', { entity_type:'customer' }, id);
+    loadCustomers();
+  } catch(e) { console.error(e); }
+}
+
+async function verifyKakao(id, code) {
+  if (!confirm('이 고객의 카카오 채널 친구 추가를 확인하셨나요?')) return;
+  await EventHub.emit('kakao_friend_verified', { entity_type:'customer', verification_code:code }, id);
+  alert('✅ 인증 완료! 체험 시퀀스가 자동 생성되었습니다.');
+  loadCustomers();
 }
 
 async function viewEvents(id) {
