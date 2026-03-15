@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>대시보드 - ONDA</title>
+<title>종합 대시보드 - ONDA</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,173 +12,168 @@
   <div class="header-inner">
     <a href="index.html" class="logo">ONDA</a>
     <nav class="nav">
-      <a href="pricing.html">가격표</a>
-      <a href="trial.html" class="nav-cta">무료체험</a>
+      <a href="hotleads.html">핫리드</a>
+      <a href="customers.html">고객관리</a>
+      <a href="analytics.html">분석</a>
+      <a href="messages.html">메시지</a>
+      <a href="dashboard.html" class="active">대시보드</a>
     </nav>
     <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
   </div>
   <div class="mobile-menu">
-    <a href="index.html">홈</a><a href="pricing.html">가격표</a><a href="trial.html">무료체험</a>
-    <a href="messages.html">메시지 템플릿</a><a href="dashboard.html">대시보드</a>
+    <a href="index.html">홈</a><a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a>
+    <a href="analytics.html">분석</a><a href="messages.html">메시지</a><a href="dashboard.html">대시보드</a>
   </div>
 </header>
 
 <section class="section" style="padding-top:100px">
   <div class="container">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:12px">
-      <h2 style="font-size:28px;font-weight:800">신청 현황</h2>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-outline" style="padding:8px 16px;font-size:14px" onclick="exportCSV()">📥 CSV 내보내기</button>
-        <button class="btn btn-outline" style="padding:8px 16px;font-size:14px" onclick="addTestData()">+ 테스트 데이터</button>
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:32px">📊 종합 대시보드</h2>
+
+    <!-- 핵심 KPI -->
+    <div class="dash-stats" style="grid-template-columns:repeat(6,1fr);margin-bottom:32px" id="kpiStats">
+      <div class="dash-stat"><div class="number">-</div><div class="label">활성 고객</div></div>
+      <div class="dash-stat"><div class="number">-</div><div class="label">체험중</div></div>
+      <div class="dash-stat"><div class="number">-</div><div class="label">핫리드</div></div>
+      <div class="dash-stat"><div class="number">-</div><div class="label">이번달 매출</div></div>
+      <div class="dash-stat"><div class="number">-</div><div class="label">체험→전환율</div></div>
+      <div class="dash-stat"><div class="number">-</div><div class="label">위험 고객</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <!-- 고객 파이프라인 -->
+      <div class="card">
+        <h3 style="margin-bottom:16px">🔄 고객 파이프라인</h3>
+        <div id="pipeline"></div>
+      </div>
+
+      <!-- 퀵 액션 -->
+      <div class="card">
+        <h3 style="margin-bottom:16px">⚡ 퀵 액션</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="hotleads.html" class="btn btn-outline" style="justify-content:flex-start;padding:12px 16px">🔥 핫리드 발굴 & 메시지 발송</a>
+          <a href="customers.html" class="btn btn-outline" style="justify-content:flex-start;padding:12px 16px">👥 고객 관리 & 상태 변경</a>
+          <a href="analytics.html" class="btn btn-outline" style="justify-content:flex-start;padding:12px 16px">📊 A/B 테스트 & 캐시플로우</a>
+          <a href="messages.html" class="btn btn-outline" style="justify-content:flex-start;padding:12px 16px">📋 메시지 템플릿 복사</a>
+          <a href="trial.html" class="btn btn-outline" style="justify-content:flex-start;padding:12px 16px">✅ 무료체험 신청 페이지</a>
+        </div>
       </div>
     </div>
 
-    <div class="dash-stats" id="stats"></div>
-
-    <div class="filter-tabs" id="filters">
-      <button class="filter-tab active" data-filter="all">전체</button>
-      <button class="filter-tab" data-filter="pending">대기</button>
-      <button class="filter-tab" data-filter="contacted">연락완료</button>
-      <button class="filter-tab" data-filter="active">진행중</button>
-      <button class="filter-tab" data-filter="converted">전환</button>
+    <!-- 최근 활동 -->
+    <div class="card" style="margin-top:24px">
+      <h3 style="margin-bottom:16px">🕐 최근 활동</h3>
+      <div id="recentActivity"></div>
     </div>
 
-    <div style="overflow-x:auto">
-      <table class="dash-table" id="table">
-        <thead>
-          <tr><th>#</th><th>매장명</th><th>키워드</th><th>연락처</th><th>업종</th><th>상태</th><th>신청일</th><th>액션</th></tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+    <!-- 시스템 현황 -->
+    <div class="card" style="margin-top:24px">
+      <h3 style="margin-bottom:16px">🖥️ 시스템 현황</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="sysStatus">
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px;text-align:center">
+          <div style="font-size:24px">🟢</div>
+          <div style="font-weight:600;margin-top:4px">DB 연결</div>
+          <div style="font-size:13px;color:var(--gray-500)">Supabase 정상</div>
+        </div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px;text-align:center">
+          <div style="font-size:24px" id="dataIcon">⏳</div>
+          <div style="font-weight:600;margin-top:4px">매장 데이터</div>
+          <div style="font-size:13px;color:var(--gray-500)" id="dataCount">로딩 중...</div>
+        </div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px;text-align:center">
+          <div style="font-size:24px" id="leadIcon">⏳</div>
+          <div style="font-weight:600;margin-top:4px">핫리드 엔진</div>
+          <div style="font-size:13px;color:var(--gray-500)" id="leadStatus">확인 중...</div>
+        </div>
+      </div>
     </div>
-    <p id="emptyMsg" style="text-align:center;padding:40px;color:var(--gray-500);display:none">신청 내역이 없습니다. <a href="trial.html" style="color:var(--primary)">무료체험 신청</a>에서 테스트해보세요.</p>
   </div>
 </section>
 
-<!-- 메모 모달 -->
-<div id="memoModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:16px;padding:32px;max-width:480px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%)">
-    <h3 style="margin-bottom:16px">메모 추가</h3>
-    <textarea id="memoText" style="width:100%;min-height:100px;padding:12px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:15px" placeholder="메모를 입력하세요..."></textarea>
-    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
-      <button class="btn btn-outline" style="padding:8px 20px" onclick="closeMemo()">취소</button>
-      <button class="btn btn-primary" style="padding:8px 20px" onclick="saveMemo()">저장</button>
-    </div>
-  </div>
-</div>
-
 <footer class="footer">
-  <div class="footer-inner">
-    <div class="footer-top">
-      <div class="footer-brand"><div class="logo">ONDA</div><p>AI 기반 네이버 플레이스 순위 관리 서비스</p></div>
-    </div>
-    <div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div>
-  </div>
+  <div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div>
 </footer>
 
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script>
-let currentFilter = 'all';
-let memoTargetId = null;
+const statusMap = { lead:'리드', trial:'체험중', onboarding:'온보딩', active:'활성', at_risk:'⚠️위험', churned:'해지', winback:'복귀' };
+const statusColors = { lead:'#FFC107', trial:'#17A2B8', onboarding:'#6F42C1', active:'#28A745', at_risk:'#FD7E14', churned:'#DC3545', winback:'#0066FF' };
 
-function getTrials() { return JSON.parse(localStorage.getItem('onda_trials') || '[]'); }
-function saveTrials(t) { localStorage.setItem('onda_trials', JSON.stringify(t)); }
-
-function render() {
-  const trials = getTrials();
-  const filtered = currentFilter === 'all' ? trials : trials.filter(t => t.status === currentFilter);
+async function loadDashboard() {
+  try {
+    const stats = await sbRpc('get_sm_dashboard_stats');
+    
+    // KPI
+    const c = stats.customers || {};
+    const r = stats.revenue || {};
+    const t = stats.trials || {};
+    document.getElementById('kpiStats').innerHTML = `
+      <div class="dash-stat"><div class="number">${c.active||0}</div><div class="label">활성 고객</div></div>
+      <div class="dash-stat"><div class="number">${c.trial||0}</div><div class="label">체험중</div></div>
+      <div class="dash-stat"><div class="number">${stats.hot_leads?.unsent||0}</div><div class="label">핫리드</div></div>
+      <div class="dash-stat"><div class="number">${r.this_month?r.this_month.toLocaleString()+'원':'0원'}</div><div class="label">이번달 매출</div></div>
+      <div class="dash-stat"><div class="number">${t.conversion_rate?(t.conversion_rate*100).toFixed(0)+'%':'0%'}</div><div class="label">체험→전환율</div></div>
+      <div class="dash-stat"><div class="number" style="color:${c.at_risk>0?'#dc3545':'var(--accent)'}">${c.at_risk||0}</div><div class="label">위험 고객</div></div>`;
+    
+    // Pipeline
+    const pipeline = document.getElementById('pipeline');
+    const stages = ['lead','trial','onboarding','active','at_risk','churned'];
+    const total = stages.reduce((s, st) => s + (c[st]||0), 0) || 1;
+    pipeline.innerHTML = stages.map(st => {
+      const cnt = c[st]||0;
+      const pct = (cnt/total*100).toFixed(0);
+      return `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px">
+          <span>${statusMap[st]}</span><span style="font-weight:700">${cnt}명</span>
+        </div>
+        <div style="background:var(--gray-100);border-radius:4px;height:8px;overflow:hidden">
+          <div style="background:${statusColors[st]};height:100%;width:${pct}%;border-radius:4px;transition:width 0.5s"></div>
+        </div>
+      </div>`;
+    }).join('');
+    
+    // A/B summary
+    if (stats.ab_test) {
+      // already handled in analytics
+    }
+  } catch(e) { console.error('Dashboard load error:', e); }
   
-  // Stats
-  const stats = { total: trials.length, pending: 0, contacted: 0, active: 0, converted: 0 };
-  trials.forEach(t => { if (stats[t.status] !== undefined) stats[t.status]++; });
-  document.getElementById('stats').innerHTML = `
-    <div class="dash-stat"><div class="number">${stats.total}</div><div class="label">총 신청</div></div>
-    <div class="dash-stat"><div class="number">${stats.pending}</div><div class="label">대기</div></div>
-    <div class="dash-stat"><div class="number">${stats.active + stats.contacted}</div><div class="label">진행중</div></div>
-    <div class="dash-stat"><div class="number">${stats.converted}</div><div class="label">전환</div></div>`;
-
-  // Table
-  const tbody = document.getElementById('tbody');
-  const empty = document.getElementById('emptyMsg');
-  if (filtered.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
-  empty.style.display = 'none';
+  // Recent activity
+  try {
+    const events = await sbQuery('sm_customer_events?order=created_at.desc&limit=10');
+    document.getElementById('recentActivity').innerHTML = events.length ? events.map(e => `
+      <div style="padding:8px 0;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center">
+        <div><strong>${e.event_type}</strong> <span style="color:var(--gray-500);font-size:13px">고객 #${e.customer_id}</span></div>
+        <span style="font-size:12px;color:var(--gray-500)">${new Date(e.created_at).toLocaleString('ko')}</span>
+      </div>`).join('') : '<p style="color:var(--gray-500);text-align:center;padding:20px">아직 활동이 없습니다.</p>';
+  } catch(e) {}
   
-  tbody.innerHTML = filtered.map((t, i) => `
-    <tr>
-      <td>${i + 1}</td>
-      <td><strong>${t.storeName}</strong>${t.notes ? '<br><small style="color:var(--gray-500)">📝 ' + t.notes + '</small>' : ''}</td>
-      <td>${t.keyword}</td>
-      <td>${t.contact}</td>
-      <td>${t.industry || '-'}</td>
-      <td><span class="status-badge status-${t.status}">${statusLabel(t.status)}</span></td>
-      <td>${new Date(t.createdAt).toLocaleDateString('ko')}</td>
-      <td>
-        <select onchange="changeStatus(${t.id}, this.value)" style="padding:4px 8px;border-radius:6px;border:1px solid var(--gray-200);font-size:13px">
-          <option value="pending" ${t.status==='pending'?'selected':''}>대기</option>
-          <option value="contacted" ${t.status==='contacted'?'selected':''}>연락완료</option>
-          <option value="active" ${t.status==='active'?'selected':''}>진행중</option>
-          <option value="converted" ${t.status==='converted'?'selected':''}>전환</option>
-        </select>
-        <button onclick="openMemo(${t.id})" style="margin-left:4px;padding:4px 8px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:13px">📝</button>
-      </td>
-    </tr>`).join('');
+  // System status
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/businesses?select=id&limit=1`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'count=exact', 'Range': '0-0' }
+    });
+    const range = res.headers.get('content-range');
+    const total = range ? range.split('/')[1] : '?';
+    document.getElementById('dataIcon').textContent = '🟢';
+    document.getElementById('dataCount').textContent = `${Number(total).toLocaleString()}개 매장`;
+  } catch(e) { document.getElementById('dataIcon').textContent = '🔴'; document.getElementById('dataCount').textContent = '연결 실패'; }
+  
+  try {
+    const leads = await sbRpc('get_hot_lead_stats');
+    document.getElementById('leadIcon').textContent = '🟢';
+    document.getElementById('leadStatus').textContent = `${leads.total||0}개 발굴됨`;
+  } catch(e) { document.getElementById('leadIcon').textContent = '🔴'; document.getElementById('leadStatus').textContent = '오류'; }
 }
 
-function statusLabel(s) { return { pending:'대기', contacted:'연락완료', active:'진행중', converted:'전환' }[s] || s; }
-
-function changeStatus(id, status) {
-  const trials = getTrials();
-  const t = trials.find(x => x.id === id);
-  if (t) { t.status = status; saveTrials(trials); render(); }
-}
-
-function openMemo(id) {
-  memoTargetId = id;
-  const trials = getTrials();
-  const t = trials.find(x => x.id === id);
-  document.getElementById('memoText').value = t?.notes || '';
-  document.getElementById('memoModal').style.display = 'block';
-}
-
-function closeMemo() { document.getElementById('memoModal').style.display = 'none'; memoTargetId = null; }
-
-function saveMemo() {
-  const trials = getTrials();
-  const t = trials.find(x => x.id === memoTargetId);
-  if (t) { t.notes = document.getElementById('memoText').value; saveTrials(trials); render(); }
-  closeMemo();
-}
-
-function exportCSV() {
-  const trials = getTrials();
-  if (!trials.length) return alert('데이터가 없습니다');
-  const header = '매장명,키워드,연락처,업종,상태,고민,메모,신청일\n';
-  const rows = trials.map(t => `"${t.storeName}","${t.keyword}","${t.contact}","${t.industry}","${statusLabel(t.status)}","${t.concern||''}","${t.notes||''}","${t.createdAt}"`).join('\n');
-  const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `onda_trials_${new Date().toISOString().slice(0,10)}.csv`; a.click();
-}
-
-function addTestData() {
-  const names = ['맛있는 떡볶이','강남 삼겹살','홍대 카페라떼','역삼 네일샵','판교 치킨'];
-  const kws = ['강남역 떡볶이','강남 삼겹살 맛집','홍대 카페','역삼 네일','판교 치킨 맛집'];
-  const inds = ['음식점','음식점','카페','미용실','음식점'];
-  const trials = getTrials();
-  const i = trials.length % 5;
-  trials.push({ id: Date.now(), storeName: names[i], placeUrl: 'https://map.naver.com/test', keyword: kws[i], contact: '010-1234-' + (5678 + i), industry: inds[i], concern: '순위가 떨어졌어요', status: 'pending', notes: '', createdAt: new Date().toISOString() });
-  saveTrials(trials); render();
-}
-
-// Filter tabs
-document.getElementById('filters').addEventListener('click', (e) => {
-  if (e.target.classList.contains('filter-tab')) {
-    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-    e.target.classList.add('active');
-    currentFilter = e.target.dataset.filter;
-    render();
-  }
-});
-
-render();
+loadDashboard();
 </script>
+<style>
+@media(max-width:768px) {
+  .dash-stats { grid-template-columns: repeat(3, 1fr) !important; }
+  div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+}
+</style>
 </body>
 </html>

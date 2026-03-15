@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>분석 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="hotleads.html">핫리드</a>
+      <a href="customers.html">고객관리</a>
+      <a href="analytics.html" class="active">분석</a>
+      <a href="messages.html">메시지</a>
+      <a href="dashboard.html">대시보드</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a>
+    <a href="analytics.html">분석</a><a href="messages.html">메시지</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:32px">📊 분석 대시보드</h2>
+
+    <!-- A/B 테스트 결과 -->
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">📨 메시지 A/B 테스트 결과</h3>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn btn-primary" style="padding:6px 16px;font-size:13px" onclick="addAbRecord()">+ 발송 기록 추가</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="dash-table" id="abTable">
+          <thead><tr><th>타입</th><th>발송</th><th>읽음</th><th>클릭</th><th>가입</th><th>전환</th><th>읽음률</th><th>클릭률</th><th>전환율</th><th>날짜</th></tr></thead>
+          <tbody id="abBody"></tbody>
+        </table>
+      </div>
+      <div id="abSummary" style="margin-top:16px;padding:16px;background:var(--gray-50);border-radius:8px"></div>
+    </div>
+
+    <!-- 캐시플로우 -->
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">💰 캐시플로우</h3>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn btn-outline" style="padding:6px 16px;font-size:13px" onclick="addCashflow('revenue')">+ 수익</button>
+        <button class="btn btn-outline" style="padding:6px 16px;font-size:13px" onclick="addCashflow('cost')">+ 비용</button>
+      </div>
+      <div class="dash-stats" id="cfStats" style="margin-bottom:16px"></div>
+      <div style="overflow-x:auto">
+        <table class="dash-table">
+          <thead><tr><th>날짜</th><th>유형</th><th>카테고리</th><th>금액</th><th>설명</th></tr></thead>
+          <tbody id="cfBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 시즌 캘린더 -->
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">📅 시즌 캘린더</h3>
+      <div id="seasonList"></div>
+    </div>
+
+    <!-- 감쇠율 데이터 -->
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">📉 투입 중단 후 감쇠율</h3>
+      <p style="color:var(--gray-500);font-size:14px;margin-bottom:16px">해지/중단 고객의 N2·순위 변동 추적</p>
+      <div style="overflow-x:auto">
+        <table class="dash-table">
+          <thead><tr><th>고객</th><th>중단일</th><th>N2(중단)</th><th>3일후</th><th>7일후</th><th>14일후</th><th>30일후</th><th>감쇠율(7일)</th></tr></thead>
+          <tbody id="decayBody"></tbody>
+        </table>
+      </div>
+      <p id="decayEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">감쇠 데이터가 아직 없습니다. 해지 고객 발생 시 자동 추적됩니다.</p>
+    </div>
+
+    <!-- 라이브 레퍼런스 -->
+    <div class="card">
+      <h3 style="margin-bottom:16px">🏆 라이브 성과 레퍼런스</h3>
+      <p style="color:var(--gray-500);font-size:14px;margin-bottom:16px">현재 순위 상승 유지 중인 고객만 표시 (자동 갱신)</p>
+      <div id="refList"></div>
+      <p id="refEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">활성 레퍼런스가 없습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- A/B 기록 추가 모달 -->
+<div id="abModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5)">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%)">
+    <h3 style="margin-bottom:16px">발송 기록 추가</h3>
+    <form onsubmit="return saveAbRecord(event)">
+      <div class="form-group"><label>메시지 타입</label>
+        <select id="abType"><option value="A">A: 순위데이터</option><option value="B">B: 경쟁변동</option><option value="C">C: 시즌형</option></select>
+      </div>
+      <div class="form-group"><label>발송 수</label><input type="number" id="abSend" required value="100"></div>
+      <div class="form-group"><label>읽음 수</label><input type="number" id="abRead" value="75"></div>
+      <div class="form-group"><label>클릭 수</label><input type="number" id="abClick" value="2"></div>
+      <div class="form-group"><label>가입 수</label><input type="number" id="abSignup" value="1"></div>
+      <div class="form-group"><label>전환 수</label><input type="number" id="abConv" value="0"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-outline" style="padding:8px 20px" onclick="document.getElementById('abModal').style.display='none'">취소</button>
+        <button type="submit" class="btn btn-primary" style="padding:8px 20px">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 캐시플로우 추가 모달 -->
+<div id="cfModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5)">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%)">
+    <h3 id="cfModalTitle" style="margin-bottom:16px">수익 추가</h3>
+    <form onsubmit="return saveCashflow(event)">
+      <input type="hidden" id="cfType">
+      <div class="form-group"><label>카테고리</label>
+        <select id="cfCategory"><option>패키지 매출</option><option>리뷰 매출</option><option>톡톡 발송비</option><option>계정 대여비</option><option>리뷰 원가</option><option>리워드 원가</option><option>AI 비용</option><option>서버 비용</option><option>기타</option></select>
+      </div>
+      <div class="form-group"><label>금액 (원)</label><input type="number" id="cfAmount" required></div>
+      <div class="form-group"><label>설명</label><input type="text" id="cfDesc"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-outline" style="padding:8px 20px" onclick="document.getElementById('cfModal').style.display='none'">취소</button>
+        <button type="submit" class="btn btn-primary" style="padding:8px 20px">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+// A/B Test
+async function loadAb() {
+  const data = await sbQuery('sm_message_ab?order=send_date.desc&limit=20');
+  const tbody = document.getElementById('abBody');
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td><strong>${r.message_type}</strong></td>
+      <td>${r.send_count}</td><td>${r.read_count}</td><td>${r.click_count}</td>
+      <td>${r.signup_count}</td><td>${r.conversion_count}</td>
+      <td>${(r.read_rate*100).toFixed(1)}%</td><td>${(r.click_rate*100).toFixed(2)}%</td>
+      <td>${(r.conversion_rate*100).toFixed(2)}%</td>
+      <td>${r.send_date}</td>
+    </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--gray-500)">데이터 없음</td></tr>';
+  
+  // Summary
+  const summary = {};
+  data.forEach(r => {
+    if (!summary[r.message_type]) summary[r.message_type] = { sends: 0, clicks: 0, convs: 0 };
+    summary[r.message_type].sends += r.send_count;
+    summary[r.message_type].clicks += r.click_count;
+    summary[r.message_type].convs += r.conversion_count;
+  });
+  document.getElementById('abSummary').innerHTML = Object.entries(summary).map(([k,v]) => 
+    `<strong>${k}타입</strong>: 발송 ${v.sends}건 / 클릭 ${v.clicks}건 (${v.sends?((v.clicks/v.sends)*100).toFixed(2):0}%) / 전환 ${v.convs}건`
+  ).join('<br>') || '데이터를 추가하면 요약이 표시됩니다.';
+}
+
+function addAbRecord() { document.getElementById('abModal').style.display = 'block'; }
+async function saveAbRecord(e) {
+  e.preventDefault();
+  await sbInsert('sm_message_ab', {
+    batch_id: 'batch_' + Date.now(),
+    message_type: document.getElementById('abType').value,
+    send_count: +document.getElementById('abSend').value,
+    read_count: +document.getElementById('abRead').value,
+    click_count: +document.getElementById('abClick').value,
+    signup_count: +document.getElementById('abSignup').value,
+    conversion_count: +document.getElementById('abConv').value
+  });
+  document.getElementById('abModal').style.display = 'none';
+  loadAb();
+  return false;
+}
+
+// Cashflow
+async function loadCashflow() {
+  const data = await sbQuery('sm_cashflow?order=date.desc&limit=30');
+  const rev = data.filter(d => d.type === 'revenue').reduce((s,d) => s + d.amount, 0);
+  const cost = data.filter(d => d.type === 'cost').reduce((s,d) => s + d.amount, 0);
+  document.getElementById('cfStats').innerHTML = `
+    <div class="dash-stat"><div class="number" style="color:var(--accent)">${rev.toLocaleString()}원</div><div class="label">수익</div></div>
+    <div class="dash-stat"><div class="number" style="color:#dc3545">${cost.toLocaleString()}원</div><div class="label">비용</div></div>
+    <div class="dash-stat"><div class="number" style="color:${rev-cost>=0?'var(--accent)':'#dc3545'}">${(rev-cost).toLocaleString()}원</div><div class="label">순이익</div></div>
+    <div class="dash-stat"><div class="number">${rev?((rev-cost)/rev*100).toFixed(0):0}%</div><div class="label">마진율</div></div>`;
+  document.getElementById('cfBody').innerHTML = data.map(d => `
+    <tr>
+      <td>${d.date}</td>
+      <td><span class="status-badge ${d.type==='revenue'?'status-active':'status-pending'}">${d.type==='revenue'?'수익':'비용'}</span></td>
+      <td>${d.category||'-'}</td>
+      <td style="font-weight:700;color:${d.type==='revenue'?'var(--accent)':'#dc3545'}">${d.type==='revenue'?'+':'-'}${d.amount.toLocaleString()}원</td>
+      <td>${d.description||'-'}</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--gray-500)">데이터 없음</td></tr>';
+}
+
+function addCashflow(type) {
+  document.getElementById('cfType').value = type;
+  document.getElementById('cfModalTitle').textContent = type === 'revenue' ? '수익 추가' : '비용 추가';
+  document.getElementById('cfModal').style.display = 'block';
+}
+
+async function saveCashflow(e) {
+  e.preventDefault();
+  await sbInsert('sm_cashflow', {
+    type: document.getElementById('cfType').value,
+    category: document.getElementById('cfCategory').value,
+    amount: +document.getElementById('cfAmount').value,
+    description: document.getElementById('cfDesc').value || null
+  });
+  document.getElementById('cfModal').style.display = 'none';
+  loadCashflow();
+  return false;
+}
+
+// Season Calendar
+async function loadSeasons() {
+  const data = await sbQuery('sm_season_calendar?order=start_date.asc');
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('seasonList').innerHTML = data.map(s => {
+    const isActive = today >= s.start_date && today <= s.end_date;
+    return `<div style="padding:16px;margin-bottom:8px;background:${isActive?'#E8F5E9':'var(--gray-50)'};border-radius:8px;border-left:4px solid ${isActive?'var(--accent)':'var(--gray-200)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>${isActive?'🔥 ':' '}${s.event_name}</strong>
+        <span style="font-size:13px;color:var(--gray-500)">${s.start_date} ~ ${s.end_date}</span>
+      </div>
+      <div style="font-size:14px;color:var(--gray-500);margin-top:4px">${(s.affected_industries||[]).join(', ')}</div>
+      <div style="font-size:13px;color:var(--primary);margin-top:4px;font-weight:600">💬 ${s.message_hook || ''}</div>
+    </div>`;
+  }).join('') || '<p style="text-align:center;color:var(--gray-500)">시즌 데이터 없음</p>';
+}
+
+// Decay profiles
+async function loadDecay() {
+  const data = await sbQuery('sm_decay_profiles?order=created_at.desc&limit=10');
+  if (!data.length) return;
+  document.getElementById('decayEmpty').style.display = 'none';
+  document.getElementById('decayBody').innerHTML = data.map(d => `
+    <tr>
+      <td>${d.customer_id}</td><td>${d.last_input_date}</td><td>${d.n2_at_stop||'-'}</td>
+      <td>${d.n2_after_3d||'-'}</td><td>${d.n2_after_7d||'-'}</td>
+      <td>${d.n2_after_14d||'-'}</td><td>${d.n2_after_30d||'-'}</td>
+      <td>${d.decay_rate_7d ? (d.decay_rate_7d*100).toFixed(1)+'%' : '-'}</td>
+    </tr>`).join('');
+}
+
+// Live references
+async function loadRefs() {
+  const data = await sbQuery('sm_live_references?is_active=eq.true&order=rank_improvement.desc');
+  if (!data.length) return;
+  document.getElementById('refEmpty').style.display = 'none';
+  document.getElementById('refList').innerHTML = data.map(r => `
+    <div style="padding:12px 16px;margin-bottom:8px;background:var(--gray-50);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <strong>${r.keyword}</strong>
+        <span style="color:var(--gray-500);font-size:13px;margin-left:8px">${r.industry||''}</span>
+      </div>
+      <div style="text-align:right">
+        <span style="color:var(--accent);font-weight:800;font-size:18px">+${r.rank_improvement}위</span>
+        <div style="font-size:12px;color:var(--gray-500)">${r.rank_before}위 → ${r.rank_current}위</div>
+      </div>
+    </div>`).join('');
+}
+
+loadAb(); loadCashflow(); loadSeasons(); loadDecay(); loadRefs();
+</script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>고객관리 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="hotleads.html">핫리드</a>
+      <a href="customers.html" class="active">고객관리</a>
+      <a href="analytics.html">분석</a>
+      <a href="messages.html">메시지</a>
+      <a href="dashboard.html">대시보드</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a>
+    <a href="analytics.html">분석</a><a href="messages.html">메시지</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+      <h2 style="font-size:28px;font-weight:800">👥 고객 생애주기 관리</h2>
+      <button class="btn btn-primary" style="padding:8px 20px;font-size:14px" onclick="openAddCustomer()">+ 고객 추가</button>
+    </div>
+
+    <div class="dash-stats" id="custStats"></div>
+
+    <div class="filter-tabs" id="statusFilter" style="margin-bottom:16px"></div>
+
+    <div style="overflow-x:auto">
+      <table class="dash-table">
+        <thead>
+          <tr><th>매장명</th><th>키워드</th><th>패키지</th><th>상태</th><th>이탈위험</th><th>연락처</th><th>가입일</th><th>액션</th></tr>
+        </thead>
+        <tbody id="custBody"></tbody>
+      </table>
+    </div>
+    <p id="custEmpty" style="text-align:center;padding:40px;color:var(--gray-500);display:none">고객이 없습니다.</p>
+  </div>
+</section>
+
+<!-- 고객 추가/수정 모달 -->
+<div id="custModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5)">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:520px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%);max-height:80vh;overflow-y:auto">
+    <h3 id="custModalTitle" style="margin-bottom:16px">고객 추가</h3>
+    <form id="custForm" onsubmit="return saveCust(event)">
+      <input type="hidden" id="custId">
+      <div class="form-group"><label>매장명 *</label><input type="text" id="cStoreName" required></div>
+      <div class="form-group"><label>키워드 *</label><input type="text" id="cKeyword" required></div>
+      <div class="form-group"><label>연락처 *</label><input type="text" id="cContact" required></div>
+      <div class="form-group"><label>플레이스 URL</label><input type="url" id="cPlaceUrl"></div>
+      <div class="form-group"><label>업종</label>
+        <select id="cIndustry"><option value="">선택</option><option>음식점</option><option>카페</option><option>미용실</option><option>병원</option><option>헬스장</option><option>기타</option></select>
+      </div>
+      <div class="form-group"><label>패키지</label>
+        <select id="cPackage"><option value="">미정</option><option value="starter">스타터 4만</option><option value="growth">그로스 8만</option><option value="pro">프로 15만</option><option value="review_only">리뷰 단독</option></select>
+      </div>
+      <div class="form-group"><label>상태</label>
+        <select id="cStatus"><option value="lead">리드</option><option value="trial">체험중</option><option value="onboarding">온보딩</option><option value="active">활성</option><option value="at_risk">위험</option><option value="churned">해지</option><option value="winback">복귀</option></select>
+      </div>
+      <div class="form-group"><label>메모</label><textarea id="cNotes" rows="3"></textarea></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-outline" style="padding:8px 20px" onclick="closeCustModal()">취소</button>
+        <button type="submit" class="btn btn-primary" style="padding:8px 20px">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 이벤트 로그 모달 -->
+<div id="eventModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5)">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:520px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%);max-height:80vh;overflow-y:auto">
+    <h3 style="margin-bottom:16px">이벤트 로그</h3>
+    <div id="eventList"></div>
+    <button class="btn btn-outline" style="padding:8px 20px;margin-top:16px;width:100%" onclick="closeEventModal()">닫기</button>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let customers = [];
+let curFilter = 'all';
+const statusMap = { lead:'리드', trial:'체험중', onboarding:'온보딩', active:'활성', at_risk:'⚠️위험', churned:'해지', winback:'복귀' };
+const statusColors = { lead:'status-pending', trial:'status-contacted', onboarding:'status-contacted', active:'status-active', at_risk:'status-pending', churned:'', winback:'status-converted' };
+
+async function loadCustomers() {
+  try {
+    let filter = curFilter !== 'all' ? `&status=eq.${curFilter}` : '';
+    customers = await sbQuery(`sm_customers?order=created_at.desc${filter}`);
+    renderStats();
+    renderCustomers();
+  } catch(e) { console.error(e); }
+}
+
+function renderStats() {
+  const all = customers;
+  const byStatus = {};
+  Object.keys(statusMap).forEach(s => byStatus[s] = 0);
+  all.forEach(c => byStatus[c.status] = (byStatus[c.status] || 0) + 1);
+  document.getElementById('custStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${all.length}</div><div class="label">전체</div></div>
+    <div class="dash-stat"><div class="number">${byStatus.active || 0}</div><div class="label">활성</div></div>
+    <div class="dash-stat"><div class="number">${byStatus.trial || 0}</div><div class="label">체험중</div></div>
+    <div class="dash-stat"><div class="number">${byStatus.at_risk || 0}</div><div class="label">⚠️위험</div></div>`;
+  
+  document.getElementById('statusFilter').innerHTML = `
+    <button class="filter-tab ${curFilter==='all'?'active':''}" onclick="setFilter('all')">전체</button>
+    ${Object.entries(statusMap).map(([k,v]) => 
+      `<button class="filter-tab ${curFilter===k?'active':''}" onclick="setFilter('${k}')">${v} (${byStatus[k]||0})</button>`
+    ).join('')}`;
+}
+
+function renderCustomers() {
+  const tbody = document.getElementById('custBody');
+  const empty = document.getElementById('custEmpty');
+  if (!customers.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = customers.map(c => `
+    <tr>
+      <td><strong>${c.store_name}</strong>${c.notes?'<br><small style="color:var(--gray-500)">'+c.notes.substring(0,30)+'</small>':''}</td>
+      <td>${c.keyword}</td>
+      <td>${c.package ? {starter:'스타터',growth:'그로스',pro:'프로',review_only:'리뷰'}[c.package] : '-'}</td>
+      <td><span class="status-badge ${statusColors[c.status]||''}">${statusMap[c.status]||c.status}</span></td>
+      <td>${c.churn_risk_score > 60 ? '🔴' : c.churn_risk_score > 30 ? '🟡' : '🟢'} ${c.churn_risk_score}</td>
+      <td>${c.contact}</td>
+      <td>${new Date(c.created_at).toLocaleDateString('ko')}</td>
+      <td>
+        <button onclick="editCust(${c.id})" style="padding:4px 8px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:12px">✏️</button>
+        <button onclick="viewEvents(${c.id})" style="padding:4px 8px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:12px">📋</button>
+        <select onchange="changeStatus(${c.id}, this.value)" style="padding:2px 4px;font-size:12px;border-radius:4px;border:1px solid var(--gray-200)">
+          ${Object.entries(statusMap).map(([k,v]) => `<option value="${k}" ${c.status===k?'selected':''}>${v}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`).join('');
+}
+
+function setFilter(f) { curFilter = f; loadCustomers(); }
+
+function openAddCustomer() {
+  document.getElementById('custModalTitle').textContent = '고객 추가';
+  document.getElementById('custId').value = '';
+  document.getElementById('custForm').reset();
+  document.getElementById('custModal').style.display = 'block';
+}
+
+async function editCust(id) {
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('custModalTitle').textContent = '고객 수정';
+  document.getElementById('custId').value = id;
+  document.getElementById('cStoreName').value = c.store_name;
+  document.getElementById('cKeyword').value = c.keyword;
+  document.getElementById('cContact').value = c.contact;
+  document.getElementById('cPlaceUrl').value = c.place_url || '';
+  document.getElementById('cIndustry').value = c.industry || '';
+  document.getElementById('cPackage').value = c.package || '';
+  document.getElementById('cStatus').value = c.status;
+  document.getElementById('cNotes').value = c.notes || '';
+  document.getElementById('custModal').style.display = 'block';
+}
+
+async function saveCust(e) {
+  e.preventDefault();
+  const id = document.getElementById('custId').value;
+  const data = {
+    store_name: document.getElementById('cStoreName').value,
+    keyword: document.getElementById('cKeyword').value,
+    contact: document.getElementById('cContact').value,
+    place_url: document.getElementById('cPlaceUrl').value || null,
+    industry: document.getElementById('cIndustry').value || null,
+    package: document.getElementById('cPackage').value || null,
+    status: document.getElementById('cStatus').value,
+    notes: document.getElementById('cNotes').value || null,
+    updated_at: new Date().toISOString()
+  };
+  if (id) {
+    await sbUpdate('sm_customers', { id }, data);
+  } else {
+    await sbInsert('sm_customers', data);
+  }
+  closeCustModal();
+  loadCustomers();
+  return false;
+}
+
+async function changeStatus(id, newStatus) {
+  try { await sbRpc('transition_customer', { cust_id: id, new_status: newStatus }); loadCustomers(); }
+  catch(e) { console.error(e); }
+}
+
+async function viewEvents(id) {
+  const events = await sbQuery(`sm_customer_events?customer_id=eq.${id}&order=created_at.desc&limit=20`);
+  document.getElementById('eventList').innerHTML = events.length ? events.map(e => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--gray-100)">
+      <div style="font-weight:600;font-size:14px">${e.event_type}</div>
+      <div style="font-size:13px;color:var(--gray-500)">${new Date(e.created_at).toLocaleString('ko')}</div>
+      ${e.event_data ? `<pre style="font-size:12px;margin-top:4px;background:var(--gray-50);padding:8px;border-radius:4px">${JSON.stringify(e.event_data, null, 2)}</pre>` : ''}
+    </div>`).join('') : '<p style="color:var(--gray-500);text-align:center;padding:20px">이벤트가 없습니다.</p>';
+  document.getElementById('eventModal').style.display = 'block';
+}
+
+function closeCustModal() { document.getElementById('custModal').style.display = 'none'; }
+function closeEventModal() { document.getElementById('eventModal').style.display = 'none'; }
+
+loadCustomers();
+</script>
+</body>
+</html>

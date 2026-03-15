@@ -91,6 +91,7 @@ AI로 매일 순위를 체크하고,
   </div>
 </footer>
 
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script>
 function copyMsg(btn) {
@@ -103,6 +104,23 @@ function copyMsg(btn) {
     setTimeout(() => { btn.textContent = '📋 복사하기'; btn.classList.remove('copied'); }, 2000);
   });
 }
+
+// Load current season hook
+async function loadSeasonHook() {
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const seasons = await sbQuery(`sm_season_calendar?start_date=lte.${today}&end_date=gte.${today}&limit=1`);
+    if (seasons.length) {
+      const hook = seasons[0].message_hook;
+      const cPre = document.querySelectorAll('.msg-card')[2]?.querySelector('pre');
+      if (cPre && hook) {
+        const orig = cPre.textContent;
+        cPre.textContent = orig.replace('요즘 시즌 맞아서', hook.split('!')[0] + '!');
+      }
+    }
+  } catch(e) {}
+}
+loadSeasonHook();
 </script>
 </body>
 </html>

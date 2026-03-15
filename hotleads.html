@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>핫리드 발굴 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="hotleads.html" class="active">핫리드</a>
+      <a href="customers.html">고객관리</a>
+      <a href="analytics.html">분석</a>
+      <a href="messages.html">메시지</a>
+      <a href="dashboard.html">대시보드</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a>
+    <a href="analytics.html">분석</a><a href="messages.html">메시지</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+      <div>
+        <h2 style="font-size:28px;font-weight:800">🔥 핫리드 발굴</h2>
+        <p style="color:var(--gray-500);font-size:14px">91,000개 매장에서 순위 하락 + 리뷰 부족 자동 발굴</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="padding:8px 20px;font-size:14px" onclick="refreshLeads()">🔄 새로고침</button>
+        <button class="btn btn-outline" style="padding:8px 20px;font-size:14px" onclick="discoverNew()">⚡ 핫리드 재발굴</button>
+      </div>
+    </div>
+
+    <div class="dash-stats" id="leadStats"></div>
+
+    <div class="filter-tabs" style="margin-bottom:16px">
+      <button class="filter-tab active" data-filter="unsent" onclick="filterLeads('unsent')">미발송</button>
+      <button class="filter-tab" data-filter="sent" onclick="filterLeads('sent')">발송완료</button>
+      <button class="filter-tab" data-filter="all" onclick="filterLeads('all')">전체</button>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table class="dash-table">
+        <thead>
+          <tr><th>우선순위</th><th>매장명</th><th>키워드</th><th>현재순위</th><th>변동</th><th>리뷰</th><th>N2추세</th><th>액션</th></tr>
+        </thead>
+        <tbody id="leadsBody"></tbody>
+      </table>
+    </div>
+    <p id="leadsEmpty" style="text-align:center;padding:40px;color:var(--gray-500);display:none">핫리드가 없습니다. "핫리드 재발굴" 버튼을 눌러주세요.</p>
+  </div>
+</section>
+
+<!-- 메시지 미리보기 모달 -->
+<div id="msgModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5)">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:520px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%)">
+    <h3 style="margin-bottom:8px" id="modalTitle">초개인화 메시지</h3>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px" id="modalInfo"></p>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="filter-tab active" onclick="switchMsgType('A',this)">A: 순위데이터</button>
+      <button class="filter-tab" onclick="switchMsgType('B',this)">B: 경쟁변동</button>
+      <button class="filter-tab" onclick="switchMsgType('C',this)">C: 시즌형</button>
+    </div>
+    <pre id="modalMsg" style="background:var(--gray-50);padding:16px;border-radius:8px;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:keep-all;font-family:inherit;max-height:300px;overflow-y:auto"></pre>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-outline" style="padding:8px 20px" onclick="closeModal()">닫기</button>
+      <button class="btn btn-primary" style="padding:8px 20px" onclick="copyAndMark()">📋 복사 & 발송완료</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let leads = [];
+let currentFilter = 'unsent';
+let currentLeadId = null;
+let currentMsgType = 'A';
+const LINK = 'https://didai64595021-ui.github.io/onda-selfmarketing/trial.html';
+
+async function loadStats() {
+  try {
+    const stats = await sbRpc('get_hot_lead_stats');
+    document.getElementById('leadStats').innerHTML = `
+      <div class="dash-stat"><div class="number">${stats.total || 0}</div><div class="label">총 핫리드</div></div>
+      <div class="dash-stat"><div class="number">${stats.unsent || 0}</div><div class="label">미발송</div></div>
+      <div class="dash-stat"><div class="number">${stats.sent_today || 0}</div><div class="label">오늘 발송</div></div>
+      <div class="dash-stat"><div class="number">${stats.avg_rank_change || 0}</div><div class="label">평균 순위하락</div></div>`;
+  } catch(e) { console.error(e); }
+}
+
+async function loadLeads() {
+  try {
+    let filter = '';
+    if (currentFilter === 'unsent') filter = '&is_sent=eq.false';
+    else if (currentFilter === 'sent') filter = '&is_sent=eq.true';
+    leads = await sbQuery(`sm_hot_leads?order=priority.desc&limit=50${filter}`);
+    renderLeads();
+  } catch(e) { console.error(e); }
+}
+
+function renderLeads() {
+  const tbody = document.getElementById('leadsBody');
+  const empty = document.getElementById('leadsEmpty');
+  if (!leads.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = leads.map(l => `
+    <tr>
+      <td><strong style="color:${l.priority > 100 ? '#dc3545' : l.priority > 50 ? '#fd7e14' : 'var(--gray-900)'}">${l.priority}</strong></td>
+      <td><strong>${l.name || '-'}</strong></td>
+      <td>${l.keyword || '-'}</td>
+      <td>${l.current_rank || '-'}위</td>
+      <td style="color:#dc3545;font-weight:700">▼${l.rank_change || 0}</td>
+      <td>${l.visitor_review_count ?? 0}건</td>
+      <td><span class="status-badge ${l.n2_trend === 'declining' ? 'status-pending' : l.n2_trend === 'rising' ? 'status-active' : 'status-contacted'}">${
+        l.n2_trend === 'declining' ? '📉 하락' : l.n2_trend === 'rising' ? '📈 상승' : '➡️ 유지'
+      }</span></td>
+      <td>
+        <button class="btn btn-primary" style="padding:4px 12px;font-size:13px" onclick="openMsg(${l.id})">메시지 생성</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterLeads(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  loadLeads();
+}
+
+async function openMsg(leadId) {
+  currentLeadId = leadId;
+  currentMsgType = 'A';
+  await loadMsg();
+  document.getElementById('msgModal').style.display = 'block';
+}
+
+async function loadMsg() {
+  try {
+    const result = await sbRpc('generate_personalized_message', { lead_id: currentLeadId, msg_type: currentMsgType });
+    const msg = result.message.replace(/\{\{LINK\}\}/g, LINK);
+    document.getElementById('modalTitle').textContent = `${result.store_name} - ${result.keyword}`;
+    document.getElementById('modalInfo').textContent = `현재 ${result.rank}위 (▼${result.rank_change}) | 리뷰 ${result.reviews ?? 0}건`;
+    document.getElementById('modalMsg').textContent = msg;
+  } catch(e) { console.error(e); }
+}
+
+function switchMsgType(type, btn) {
+  currentMsgType = type;
+  document.querySelectorAll('#msgModal .filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  loadMsg();
+}
+
+async function copyAndMark() {
+  const msg = document.getElementById('modalMsg').textContent;
+  await navigator.clipboard.writeText(msg);
+  // Mark as sent
+  await sbUpdate('sm_hot_leads', { id: currentLeadId }, { is_sent: true, sent_at: new Date().toISOString(), message_type: currentMsgType });
+  closeModal();
+  loadLeads();
+  loadStats();
+  alert('메시지가 복사되었습니다! 톡톡에 붙여넣기하세요.');
+}
+
+function closeModal() { document.getElementById('msgModal').style.display = 'none'; }
+async function refreshLeads() { await loadStats(); await loadLeads(); }
+async function discoverNew() {
+  const btn = event.target; btn.disabled = true; btn.textContent = '발굴 중...';
+  try {
+    const count = await sbRpc('discover_hot_leads');
+    alert(`${count}개 핫리드 발굴 완료!`);
+    await refreshLeads();
+  } catch(e) { alert('오류: ' + e.message); }
+  btn.disabled = false; btn.textContent = '⚡ 핫리드 재발굴';
+}
+
+loadStats();
+loadLeads();
+</script>
+</body>
+</html>

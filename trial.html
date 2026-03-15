@@ -91,26 +91,40 @@
   </div>
 </footer>
 
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script>
-function submitTrial(e) {
+async function submitTrial(e) {
   e.preventDefault();
   const form = e.target;
+  const btn = form.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = '신청 중...';
+  
   const data = {
-    id: Date.now(),
-    storeName: form.storeName.value,
-    placeUrl: form.placeUrl.value,
+    store_name: form.storeName.value,
+    place_url: form.placeUrl.value,
     keyword: form.keyword.value,
     contact: form.contact.value,
-    industry: form.industry.value,
-    concern: form.concern.value,
-    status: 'pending',
-    notes: '',
-    createdAt: new Date().toISOString()
+    industry: form.industry.value || null,
+    concern: form.concern.value || null,
+    status: 'lead',
+    source_channel: 'website'
   };
-  const trials = JSON.parse(localStorage.getItem('onda_trials') || '[]');
-  trials.push(data);
-  localStorage.setItem('onda_trials', JSON.stringify(trials));
+  
+  try {
+    // Supabase에 저장
+    await sbInsert('sm_customers', data);
+    // localStorage 백업도 유지
+    const trials = JSON.parse(localStorage.getItem('onda_trials') || '[]');
+    trials.push({ ...data, id: Date.now(), createdAt: new Date().toISOString() });
+    localStorage.setItem('onda_trials', JSON.stringify(trials));
+  } catch(err) {
+    // Supabase 실패 시 localStorage만
+    const trials = JSON.parse(localStorage.getItem('onda_trials') || '[]');
+    trials.push({ ...data, id: Date.now(), createdAt: new Date().toISOString() });
+    localStorage.setItem('onda_trials', JSON.stringify(trials));
+  }
+  
   document.getElementById('trialForm').style.display = 'none';
   document.getElementById('successScreen').style.display = 'block';
   return false;
