@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가설 테스트 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="hotleads.html">핫리드</a>
+      <a href="customers.html">고객관리</a>
+      <a href="analytics.html">분석</a>
+      <a href="hypotheses.html" class="active">가설</a>
+      <a href="constraints.html">제약조건</a>
+      <a href="dashboard.html">대시보드</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a>
+    <a href="analytics.html">분석</a><a href="hypotheses.html">가설</a><a href="constraints.html">제약조건</a>
+    <a href="remarketing.html">리마케팅</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+      <div>
+        <h2 style="font-size:28px;font-weight:800">🧪 가설 테스트 프레임워크</h2>
+        <p style="color:var(--gray-500);font-size:14px">N2 로직 역공학 — 모든 변수는 가설, 데이터가 판단</p>
+      </div>
+      <button class="btn btn-primary" style="padding:8px 20px;font-size:14px" onclick="openAdd()">+ 가설 등록</button>
+    </div>
+
+    <div class="dash-stats" id="hypoStats" style="margin-bottom:24px"></div>
+
+    <div class="filter-tabs" style="margin-bottom:16px">
+      <button class="filter-tab active" onclick="setFilter('all',this)">전체</button>
+      <button class="filter-tab" onclick="setFilter('proposed',this)">제안됨</button>
+      <button class="filter-tab" onclick="setFilter('testing',this)">테스트중</button>
+      <button class="filter-tab" onclick="setFilter('measured',this)">측정완료</button>
+      <button class="filter-tab" onclick="setFilter('validated',this)">✅ 검증됨</button>
+      <button class="filter-tab" onclick="setFilter('rejected',this)">❌ 기각</button>
+    </div>
+
+    <div id="hypoList"></div>
+  </div>
+</section>
+
+<!-- 가설 추가 모달 -->
+<div id="hypoModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5)">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:520px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%)">
+    <h3 style="margin-bottom:16px">가설 등록</h3>
+    <form onsubmit="return saveHypo(event)">
+      <div class="form-group"><label>가설 *</label><textarea id="hText" required rows="3" placeholder="예: 블로그 발행 후 24시간 내 트래픽 투입이 효과적이다"></textarea></div>
+      <div class="form-group"><label>출처</label>
+        <select id="hSource"><option value="admin">관리자</option><option value="ai">AI 자동발견</option><option value="community">커뮤니티</option><option value="competitor">경쟁사 분석</option><option value="customer">고객 피드백</option></select>
+      </div>
+      <div class="form-group"><label>변수 카테고리</label>
+        <select id="hCategory"><option value="volume">투입량</option><option value="mission">미션유형</option><option value="source">매체</option><option value="timing">타이밍</option><option value="blog_timing">블로그</option><option value="review_quality">리뷰품질</option><option value="logic">로직</option><option value="other">기타</option></select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-outline" style="padding:8px 20px" onclick="closeModal()">취소</button>
+        <button type="submit" class="btn btn-primary" style="padding:8px 20px">등록</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let curFilter = 'all';
+const statusEmoji = { proposed:'💡', approved:'✅', testing:'🔬', measured:'📊', validated:'✅', rejected:'❌', insufficient_data:'⚠️' };
+const statusLabel = { proposed:'제안됨', approved:'승인', testing:'테스트중', measured:'측정완료', validated:'검증됨', rejected:'기각', insufficient_data:'데이터부족' };
+const confColors = { low:'#dc3545', medium:'#fd7e14', high:'#28a745' };
+
+async function load() {
+  let filter = curFilter !== 'all' ? `&status=eq.${curFilter}` : '';
+  const data = await sbQuery(`sm_hypotheses?order=created_at.desc${filter}`);
+  
+  const byStatus = {};
+  const all = await sbQuery('sm_hypotheses?select=status');
+  all.forEach(h => byStatus[h.status] = (byStatus[h.status]||0) + 1);
+  
+  document.getElementById('hypoStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${all.length}</div><div class="label">전체</div></div>
+    <div class="dash-stat"><div class="number">${byStatus.testing||0}</div><div class="label">테스트중</div></div>
+    <div class="dash-stat"><div class="number">${byStatus.validated||0}</div><div class="label">검증됨</div></div>
+    <div class="dash-stat"><div class="number">${byStatus.rejected||0}</div><div class="label">기각</div></div>`;
+  
+  document.getElementById('hypoList').innerHTML = data.length ? data.map(h => `
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span>${statusEmoji[h.status]||'❓'}</span>
+            <span class="status-badge" style="background:${h.status==='validated'?'#D4EDDA':h.status==='rejected'?'#F8D7DA':'#FFF3CD'};color:${h.status==='validated'?'#155724':h.status==='rejected'?'#721C24':'#856404'}">${statusLabel[h.status]||h.status}</span>
+            <span style="font-size:12px;padding:2px 8px;border-radius:10px;background:var(--gray-100);color:var(--gray-500)">${h.variable_category||''}</span>
+            <span style="font-size:12px;color:${confColors[h.confidence_level]||'#6c757d'};font-weight:700">신뢰도: ${h.confidence_level}</span>
+          </div>
+          <p style="font-size:15px;font-weight:600;margin-bottom:4px">${h.hypothesis_text}</p>
+          <p style="font-size:13px;color:var(--gray-500)">출처: ${h.source||'-'} | 표본: ${h.sample_count||0}건 | 효과크기: ${h.effect_size||'-'}</p>
+        </div>
+        <select onchange="changeHypoStatus(${h.id}, this.value)" style="padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--gray-200)">
+          ${Object.entries(statusLabel).map(([k,v]) => `<option value="${k}" ${h.status===k?'selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+    </div>`).join('') : '<p style="text-align:center;padding:40px;color:var(--gray-500)">가설이 없습니다.</p>';
+}
+
+function setFilter(f, btn) {
+  curFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  load();
+}
+
+function openAdd() { document.getElementById('hypoModal').style.display = 'block'; }
+function closeModal() { document.getElementById('hypoModal').style.display = 'none'; }
+
+async function saveHypo(e) {
+  e.preventDefault();
+  await sbInsert('sm_hypotheses', {
+    hypothesis_text: document.getElementById('hText').value,
+    source: document.getElementById('hSource').value,
+    variable_category: document.getElementById('hCategory').value
+  });
+  closeModal(); load();
+  return false;
+}
+
+async function changeHypoStatus(id, status) {
+  await sbUpdate('sm_hypotheses', { id }, { status, updated_at: new Date().toISOString() });
+  load();
+}
+
+load();
+</script>
+</body>
+</html>

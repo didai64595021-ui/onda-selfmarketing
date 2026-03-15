@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>글로벌 제약조건 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a><a href="analytics.html">분석</a>
+      <a href="hypotheses.html">가설</a><a href="constraints.html" class="active">제약조건</a><a href="dashboard.html">대시보드</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a>
+    <a href="analytics.html">분석</a><a href="hypotheses.html">가설</a><a href="constraints.html">제약조건</a>
+    <a href="remarketing.html">리마케팅</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">⚙️ 글로벌 제약조건 엔진</h2>
+    <p style="color:var(--gray-500);margin-bottom:32px">TIER 0: 절대 제약 — 모든 주문서 생성 시 최종 검증</p>
+
+    <div id="constraintsList"></div>
+
+    <div class="card" style="margin-top:32px">
+      <h3 style="margin-bottom:16px">📋 로직 우선순위 계층</h3>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="padding:12px 16px;background:#FFE0E0;border-radius:8px;border-left:4px solid #DC3545">
+          <strong>TIER 0: 글로벌 제약</strong> — 절대. 누구도 위반 불가
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">max_daily 200타, 미션 비율, 매체 점유율</div>
+        </div>
+        <div style="padding:12px 16px;background:#FFE8CC;border-radius:8px;border-left:4px solid #FD7E14">
+          <strong>TIER 1: 긴급 대응</strong> — L9, 로직 대변경, 결제 실패
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">N2 4일 연속 하락 → 매체 즉시 전환</div>
+        </div>
+        <div style="padding:12px 16px;background:#FFF3CD;border-radius:8px;border-left:4px solid #FFC107">
+          <strong>TIER 2: 안전 로직</strong> — 매체 수명, 블로그 삭제, 반영 대기
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">기존 매체 2일룰, 신규 매체 4-7일 테스트</div>
+        </div>
+        <div style="padding:12px 16px;background:#D4EDDA;border-radius:8px;border-left:4px solid #28A745">
+          <strong>TIER 3: 최적화</strong> — 밴딧 매체선택, 키워드 효율, 요일 가중치
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Thompson Sampling 기반 매체 자동 배분</div>
+        </div>
+        <div style="padding:12px 16px;background:#CCE5FF;border-radius:8px;border-left:4px solid #0066FF">
+          <strong>TIER 4: 자연화</strong> — 볼륨 노이즈, 시간대 분배, 미션 시퀀스
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">±40% 가우시안 노이즈, 피크 12-13/18-20시</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+      <h3 style="margin-bottom:16px">🔄 이벤트 분류 체계</h3>
+      <div style="overflow-x:auto">
+        <table class="dash-table">
+          <thead><tr><th>유형</th><th>감지 조건</th><th>대응</th></tr></thead>
+          <tbody>
+            <tr><td><strong>로직 변경</strong></td><td>87K 전체 N2 중앙값 2σ+ 변동</td><td>전 고객 주문서 보류 + 48시간 모니터링</td></tr>
+            <tr><td><strong>블로그 필터링</strong></td><td>blog_review_count 5%+ 감소</td><td>리워드 유지 + 블로그 재작성</td></tr>
+            <tr><td><strong>패턴 감지</strong></td><td>특정 매체/미션 투입 후 역효과</td><td>해당 매체/미션 즉시 교체</td></tr>
+            <tr><td><strong>반영 지연</strong></td><td>투입 후 7일 미만 + N2 미변동</td><td>L9 억제. 대기.</td></tr>
+            <tr><td><strong>계절/자연</strong></td><td>시즌 캘린더 일치 + 업종 전체 동일</td><td>투입량 시즌 보정</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+async function load() {
+  const data = await sbQuery('sm_global_constraints?order=category.asc,constraint_name.asc');
+  const byCategory = {};
+  data.forEach(c => { (byCategory[c.category] = byCategory[c.category] || []).push(c); });
+  
+  const catNames = { VOLUME:'📊 투입량', MISSION:'🎯 미션', SOURCE:'🔄 매체', TIMING:'⏰ 타이밍', BUDGET:'💰 예산' };
+  
+  document.getElementById('constraintsList').innerHTML = Object.entries(byCategory).map(([cat, items]) => `
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">${catNames[cat] || cat}</h3>
+      ${items.map(c => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--gray-100)">
+          <div>
+            <strong>${c.constraint_name}</strong>
+            <div style="font-size:13px;color:var(--gray-500)">${c.description || ''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" value="${c.value || ''}" 
+              onchange="updateConstraint(${c.id}, this.value)"
+              style="width:80px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;text-align:right;font-size:14px;font-weight:700">
+            <span style="font-size:12px;color:${c.is_active?'var(--accent)':'#dc3545'}">${c.is_active?'🟢':'🔴'}</span>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+async function updateConstraint(id, value) {
+  await sbUpdate('sm_global_constraints', { id }, { value: parseFloat(value), updated_at: new Date().toISOString() });
+}
+
+load();
+</script>
+</body>
+</html>

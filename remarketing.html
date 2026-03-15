@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>리마케팅 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a><a href="analytics.html">분석</a>
+      <a href="remarketing.html" class="active">리마케팅</a><a href="dashboard.html">대시보드</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a>
+    <a href="analytics.html">분석</a><a href="hypotheses.html">가설</a><a href="constraints.html">제약조건</a>
+    <a href="remarketing.html">리마케팅</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">🔁 리마케팅 퍼널</h2>
+    <p style="color:var(--gray-500);margin-bottom:32px">미전환 고객 자동 재발송 시퀀스</p>
+
+    <!-- 퍼널 시각화 -->
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">퍼널 구조 (4 Stages)</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center">
+        <div style="padding:20px;background:#E3F2FD;border-radius:12px">
+          <div style="font-size:32px;margin-bottom:8px">📨</div>
+          <strong>Stage 1</strong>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">톡톡 2차 발송<br>(14일 후)</div>
+        </div>
+        <div style="padding:20px;background:#E8F5E9;border-radius:12px">
+          <div style="font-size:32px;margin-bottom:8px">💬</div>
+          <strong>Stage 2</strong>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">카카오 리마인드<br>(24/72시간)</div>
+        </div>
+        <div style="padding:20px;background:#FFF3E0;border-radius:12px">
+          <div style="font-size:32px;margin-bottom:8px">📊</div>
+          <strong>Stage 3</strong>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">무료체험 미전환<br>(D5~D30)</div>
+        </div>
+        <div style="padding:20px;background:#FCE4EC;border-radius:12px">
+          <div style="font-size:32px;margin-bottom:8px">🔄</div>
+          <strong>Stage 4</strong>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">해지 고객<br>(7/14/30일)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오늘 발송할 리마케팅 -->
+    <div class="card" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>📬 오늘 발송할 리마케팅</h3>
+        <button class="btn btn-primary" style="padding:6px 16px;font-size:13px" onclick="loadPending()">🔄 새로고침</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="dash-table">
+          <thead><tr><th>고객</th><th>키워드</th><th>연락처</th><th>Stage</th><th>메시지 타입</th><th>예정</th><th>액션</th></tr></thead>
+          <tbody id="pendingBody"></tbody>
+        </table>
+      </div>
+      <p id="pendingEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">오늘 발송할 리마케팅이 없습니다.</p>
+    </div>
+
+    <!-- 전체 시퀀스 목록 -->
+    <div class="card">
+      <h3 style="margin-bottom:16px">📋 전체 리마케팅 시퀀스</h3>
+      <div class="filter-tabs" style="margin-bottom:16px">
+        <button class="filter-tab active" onclick="loadAll('all',this)">전체</button>
+        <button class="filter-tab" onclick="loadAll('pending',this)">대기</button>
+        <button class="filter-tab" onclick="loadAll('sent',this)">발송완료</button>
+        <button class="filter-tab" onclick="loadAll('clicked',this)">클릭</button>
+        <button class="filter-tab" onclick="loadAll('converted',this)">전환</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="dash-table">
+          <thead><tr><th>ID</th><th>고객</th><th>Stage</th><th>타입</th><th>예정일</th><th>발송일</th><th>상태</th></tr></thead>
+          <tbody id="allBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+const stageLabel = { 1:'Stage 1: 2차 발송', 2:'Stage 2: 카카오 리마인드', 3:'Stage 3: 성과 사례', 4:'Stage 4: 마지막 안내' };
+const statusLabel = { pending:'대기', sent:'발송', clicked:'클릭', converted:'전환', expired:'만료' };
+
+async function loadPending() {
+  try {
+    const data = await sbRpc('get_pending_remarketing');
+    const tbody = document.getElementById('pendingBody');
+    const empty = document.getElementById('pendingEmpty');
+    if (!data || !data.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td><strong>${r.store_name||'-'}</strong></td>
+        <td>${r.keyword||'-'}</td>
+        <td>${r.contact||'-'}</td>
+        <td>${stageLabel[r.stage]||r.stage}</td>
+        <td>${r.message_type}</td>
+        <td>${new Date(r.scheduled_at).toLocaleString('ko')}</td>
+        <td>
+          <button class="btn btn-primary" style="padding:4px 12px;font-size:12px" onclick="markSent(${r.id})">발송완료</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function markSent(id) {
+  await sbUpdate('sm_remarketing_queue', { id }, { status: 'sent', sent_at: new Date().toISOString() });
+  loadPending();
+  loadAll('all');
+}
+
+let curFilter = 'all';
+async function loadAll(filter, btn) {
+  if (btn) { document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); }
+  let f = filter !== 'all' ? `&status=eq.${filter}` : '';
+  const data = await sbQuery(`sm_remarketing_queue?order=scheduled_at.desc&limit=50${f}`);
+  document.getElementById('allBody').innerHTML = data.length ? data.map(r => `
+    <tr>
+      <td>${r.id}</td>
+      <td>${r.customer_id}</td>
+      <td>${stageLabel[r.stage]||r.stage}</td>
+      <td>${r.message_type}</td>
+      <td>${new Date(r.scheduled_at).toLocaleDateString('ko')}</td>
+      <td>${r.sent_at ? new Date(r.sent_at).toLocaleDateString('ko') : '-'}</td>
+      <td><span class="status-badge ${r.status==='pending'?'status-pending':r.status==='sent'?'status-contacted':r.status==='converted'?'status-converted':'status-active'}">${statusLabel[r.status]||r.status}</span></td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--gray-500)">데이터 없음</td></tr>';
+}
+
+loadPending();
+loadAll('all');
+</script>
+</body>
+</html>
