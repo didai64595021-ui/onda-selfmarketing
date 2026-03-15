@@ -27,7 +27,7 @@
   </div>
 </section>
 <footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
-<script src="config.js"></script><script src="app.js"></script>
+<script src="config.js"></script><script src="app.js"></script><script src="event-hub.js"></script>
 <script>
 async function load() {
   const data = await sbQuery('sm_referrals?order=created_at.desc');
@@ -44,7 +44,8 @@ async function generateCode() {
   const custId = prompt('추천인 고객 ID:');
   if (!custId) return;
   await sbInsert('sm_referrals', { referrer_id: parseInt(custId), referral_code: code });
-  alert(`추천 코드: ${code}`);
+  await EventHub.emit('referral_created', { entity_type:'referral', referral_code:code }, parseInt(custId));
+  alert(`추천 코드: ${code}\n이 코드를 고객에게 전달하세요.`);
   load();
 }
 load();

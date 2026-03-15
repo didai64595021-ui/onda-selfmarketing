@@ -126,6 +126,15 @@ async function loadPending() {
 
 async function markSent(id) {
   await sbUpdate('sm_remarketing_queue', { id }, { status: 'sent', sent_at: new Date().toISOString() });
+  // EventHub: 리마케팅 발송 기록
+  const items = await sbQuery(`sm_remarketing_queue?id=eq.${id}`);
+  if (items.length) {
+    await EventHub.emit('message_sent', {
+      entity_type: 'remarketing',
+      stage: items[0].stage,
+      message_type: items[0].message_type
+    }, items[0].customer_id);
+  }
   loadPending();
   loadAll('all');
 }

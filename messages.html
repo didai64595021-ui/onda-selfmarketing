@@ -93,14 +93,20 @@ AI로 매일 순위를 체크하고,
 
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script src="event-hub.js"></script>
 <script>
 function copyMsg(btn) {
   const pre = btn.previousElementSibling;
   const link = document.getElementById('linkInput').value || '{{LINK}}';
   const text = pre.textContent.replace(/\{\{LINK\}\}/g, link);
+  const variant = btn.closest('.msg-card')?.querySelector('h3')?.textContent?.includes('A') ? 'A' : btn.closest('.msg-card')?.querySelector('h3')?.textContent?.includes('B') ? 'B' : 'C';
   navigator.clipboard.writeText(text).then(() => {
     btn.textContent = '✅ 복사완료!';
     btn.classList.add('copied');
+    // EventHub: 메시지 복사 = 발송 의도 기록
+    EventHub.emit('message_sent', { entity_type:'message_template', message_type: variant });
+    // A/B 기록
+    sbInsert('sm_message_ab', { message_type:variant, send_count:1, send_date:new Date().toISOString().split('T')[0], target_segment:'manual' }).catch(()=>{});
     setTimeout(() => { btn.textContent = '📋 복사하기'; btn.classList.remove('copied'); }, 2000);
   });
 }

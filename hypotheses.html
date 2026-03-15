@@ -79,6 +79,7 @@
 
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script src="event-hub.js"></script>
 <script>
 let curFilter = 'all';
 const statusEmoji = { proposed:'💡', approved:'✅', testing:'🔬', measured:'📊', validated:'✅', rejected:'❌', insufficient_data:'⚠️' };
@@ -142,6 +143,20 @@ async function saveHypo(e) {
 
 async function changeHypoStatus(id, status) {
   await sbUpdate('sm_hypotheses', { id }, { status, updated_at: new Date().toISOString() });
+  await EventHub.emit('hypothesis_status_changed', { entity_type:'hypothesis', hypothesis_id:id, new_status:status });
+  // 가설 검증 완료 시 → AI 판단 로그에 기록
+  if (status === 'validated' || status === 'rejected') {
+    const hyps = await sbQuery(`sm_hypotheses?id=eq.${id}`);
+    if (hyps.length) {
+      await sbInsert('sm_decision_log', {
+        decision_type: '가설 검증',
+        action_taken: `${hyps[0].title}: ${status === 'validated' ? '검증됨' : '기각됨'}`,
+        reasoning_summary: hyps[0].description || '',
+        confidence: status === 'validated' ? 'high' : 'medium',
+        data_points_used: hyps[0].test_results ? Object.keys(hyps[0].test_results).length : 0
+      });
+    }
+  }
   load();
 }
 

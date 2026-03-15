@@ -478,13 +478,8 @@ async function runOrders() {
 
 async function runChurn() {
   const btn = event.target; btn.disabled = true; btn.textContent = '스캔 중...';
-  const customers = await sbQuery('sm_customers?status=eq.active');
-  let atRisk = 0;
-  for (const c of customers) {
-    const score = await sbRpc('calculate_churn_risk', { cust_id: c.id });
-    if (score >= 60) { await sbRpc('transition_customer', { cust_id: c.id, new_status: 'at_risk' }); atRisk++; }
-  }
-  alert(`스캔 완료. ${atRisk}명 위험 감지.`);
+  const alerts = await EventHub.scanChurnRisk();
+  alert(`스캔 완료. ${alerts}명 위험 감지.\n→ 리마케팅 큐 자동 추가 + 위험 알림 생성됨`);
   btn.disabled = false; btn.textContent = '전체 스캔 ▶';
   loadOverview(); loadAutomation();
 }

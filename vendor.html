@@ -128,6 +128,20 @@ async function updateOrder(id, status) {
   const body = { status };
   if (status === 'completed') body.completed_at = new Date().toISOString();
   await sbUpdate('sm_vendor_orders', { id }, body);
+  // 완료 시 → EventHub: 리더보드 업데이트 + 고객 이벤트 기록
+  if (status === 'completed') {
+    const orders = await sbQuery(`sm_vendor_orders?id=eq.${id}`);
+    if (orders.length) {
+      const o = orders[0];
+      await EventHub.emit('vendor_order_completed', {
+        entity_type: 'vendor_order',
+        source: o.source_name,
+        keyword: o.keyword,
+        volume: o.total_volume,
+        success: true
+      }, o.customer_id);
+    }
+  }
   loadOrders();
 }
 

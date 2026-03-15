@@ -170,12 +170,29 @@ function switchMsgType(type, btn) {
 async function copyAndMark() {
   const msg = document.getElementById('modalMsg').textContent;
   await navigator.clipboard.writeText(msg);
+  const lead = leads.find(l => l.id === currentLeadId);
   // Mark as sent
   await sbUpdate('sm_hot_leads', { id: currentLeadId }, { is_sent: true, sent_at: new Date().toISOString(), message_type: currentMsgType });
+  // EventHub: 메시지 발송 이벤트 → 타겟풀 소진 + 발송 스케줄 업데이트 + A/B 테스트 기록
+  await EventHub.emit('message_sent', {
+    entity_type: 'hot_lead',
+    entity_id: currentLeadId,
+    message_type: currentMsgType,
+    store_name: lead?.name,
+    keyword: lead?.keyword,
+    priority: lead?.priority > 100 ? 1 : lead?.priority > 50 ? 2 : 3
+  });
+  // A/B 테스트용 메시지 기록
+  await sbInsert('sm_message_ab', {
+    message_type: currentMsgType,
+    target_segment: lead?.keyword || '',
+    send_count: 1,
+    send_date: new Date().toISOString().split('T')[0]
+  }).catch(() => {});
   closeModal();
   loadLeads();
   loadStats();
-  alert('메시지가 복사되었습니다! 톡톡에 붙여넣기하세요.');
+  alert('✅ 메시지 복사 + 발송 기록 완료!');
 }
 
 function closeModal() { document.getElementById('msgModal').style.display = 'none'; }

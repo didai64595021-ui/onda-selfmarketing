@@ -54,7 +54,14 @@ async function load() {
       <td>${d.status==='pending'?`<button class="btn btn-primary" style="padding:4px 12px;font-size:12px" onclick="markSent(${d.id})">발송</button>`:''}</td>
     </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:20px">시퀀스가 없습니다. 고객이 카카오 채널을 추가하면 자동 생성됩니다.</td></tr>';
 }
-async function markSent(id) { await sbUpdate('sm_kakao_sequences', {id}, {status:'sent', sent_at:new Date().toISOString()}); load(); }
+async function markSent(id) {
+  await sbUpdate('sm_kakao_sequences', {id}, {status:'sent', sent_at:new Date().toISOString()});
+  const seqs = await sbQuery(`sm_kakao_sequences?id=eq.${id}`);
+  if (seqs.length) {
+    await EventHub.emit('message_sent', { entity_type:'kakao_sequence', stage:seqs[0].stage }, seqs[0].customer_id);
+  }
+  load();
+}
 load();
 </script>
 </body>

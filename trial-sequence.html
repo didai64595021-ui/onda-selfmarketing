@@ -69,7 +69,18 @@ async function load() {
       <td>${d.status==='pending'?`<button class="btn btn-primary" style="padding:4px 10px;font-size:12px" onclick="markDone(${d.id})">완료</button>`:''}</td>
     </tr>`).join('');
 }
-async function markDone(id) { await sbUpdate('sm_trial_sequences',{id},{status:'sent',sent_at:new Date().toISOString()}); load(); }
+async function markDone(id) {
+  await sbUpdate('sm_trial_sequences',{id},{status:'sent',sent_at:new Date().toISOString()});
+  const seqs = await sbQuery(`sm_trial_sequences?id=eq.${id}`);
+  if (seqs.length) {
+    await EventHub.emit('message_sent', { entity_type:'trial_sequence', action:seqs[0].action_type, day:seqs[0].day_offset }, seqs[0].customer_id);
+    // D+7 전환유도 완료 시 → 전환 리마인드 이벤트
+    if (seqs[0].action_type === 'conversion_push') {
+      await sbInsert('sm_remarketing_queue', { customer_id:seqs[0].customer_id, stage:2, message_type:'trial_conversion', scheduled_at:new Date(Date.now()+86400000).toISOString(), status:'pending' });
+    }
+  }
+  load();
+}
 load();
 </script>
 </body>

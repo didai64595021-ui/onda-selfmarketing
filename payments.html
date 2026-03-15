@@ -65,11 +65,18 @@ async function addPayment() {
   const custId = prompt('고객 ID:'); if(!custId) return;
   const amount = prompt('금액:'); if(!amount) return;
   const pkg = prompt('패키지 (starter/growth/pro):') || 'starter';
-  await sbInsert('sm_payments', {customer_id:parseInt(custId), amount:parseInt(amount), package:pkg, status:'paid'});
+  await sbInsert('sm_payments', {customer_id:parseInt(custId), amount:parseInt(amount), package:pkg, status:'paid', payment_date:new Date().toISOString().split('T')[0]});
+  // EventHub: 결제 완료 → 고객 온보딩 시작 + 외주 주문서 자동생성
+  await EventHub.emit('trial_converted', { entity_type:'customer', package:pkg }, parseInt(custId));
   load();
 }
 async function failPayment(id) {
+  const payments = await sbQuery(`sm_payments?id=eq.${id}`);
   const result = await sbRpc('handle_payment_failure', {payment_id: id});
+  // EventHub: 결제 실패 → 위험 알림 + 투입 중단
+  if (payments.length) {
+    await EventHub.emit('payment_failed', { entity_type:'payment', payment_id:id }, payments[0].customer_id);
+  }
   alert(JSON.stringify(result, null, 2));
   load();
 }
