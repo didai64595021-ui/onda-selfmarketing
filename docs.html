@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONDA - 시스템 설명서</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+/* Docs Layout */
+.docs-layout { display: flex; min-height: calc(100vh - 64px); margin-top: 64px; }
+
+/* Sidebar */
+.docs-sidebar {
+  position: fixed; top: 64px; left: 0; bottom: 0; width: 260px;
+  background: #fff; border-right: 1px solid var(--gray-200);
+  overflow-y: auto; z-index: 100; padding: 0;
+  transition: transform 0.3s ease;
+}
+.docs-sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--gray-100); }
+.docs-sidebar-header h3 { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 12px; }
+.docs-search { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+.docs-search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,102,255,0.1); }
+.docs-nav { padding: 12px 0; }
+.docs-nav-group { margin-bottom: 4px; }
+.docs-nav-group-title {
+  font-size: 11px; font-weight: 700; color: var(--gray-500);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 8px 16px 4px; display: block;
+}
+.docs-nav a {
+  display: block; padding: 6px 16px 6px 24px; font-size: 13px;
+  color: var(--gray-500); transition: all 0.15s; border-left: 3px solid transparent;
+}
+.docs-nav a:hover { color: var(--primary); background: rgba(0,102,255,0.04); }
+.docs-nav a.active { color: var(--primary); background: rgba(0,102,255,0.06); border-left-color: var(--primary); font-weight: 600; }
+.docs-nav a.sub { padding-left: 36px; font-size: 12px; }
+
+/* Content */
+.docs-content { margin-left: 260px; padding: 32px 40px 80px; max-width: 960px; width: 100%; }
+.docs-content h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; color: var(--gray-900); }
+.docs-content .docs-updated { font-size: 13px; color: var(--gray-500); margin-bottom: 32px; }
+.docs-section { margin-bottom: 56px; padding-top: 24px; scroll-margin-top: 80px; }
+.docs-section h2 { font-size: 22px; font-weight: 800; color: var(--gray-900); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); }
+.docs-section h3 { font-size: 17px; font-weight: 700; color: var(--gray-900); margin: 24px 0 12px; }
+.docs-section h4 { font-size: 15px; font-weight: 700; color: var(--gray-900); margin: 16px 0 8px; }
+.docs-section p { font-size: 14px; color: var(--gray-900); line-height: 1.8; margin-bottom: 12px; }
+.docs-section ul, .docs-section ol { font-size: 14px; line-height: 1.8; margin-bottom: 16px; padding-left: 20px; }
+.docs-section li { margin-bottom: 4px; }
+.docs-section code { background: var(--gray-50); padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #e83e8c; font-family: 'SF Mono', monospace; }
+
+/* Flow Diagram */
+.flow-diagram { background: var(--gray-50); border-radius: 12px; padding: 24px; margin: 16px 0 24px; overflow-x: auto; }
+.flow-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.flow-step { background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.flow-step.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.flow-step.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+.flow-arrow { font-size: 16px; color: var(--gray-500); flex-shrink: 0; }
+
+/* Page Card */
+.page-card { background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; margin-bottom: 16px; transition: box-shadow 0.2s; }
+.page-card:hover { box-shadow: var(--shadow); }
+.page-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.page-card-num { background: var(--primary); color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.page-card-title { font-size: 15px; font-weight: 700; }
+.page-card-title a { color: var(--primary); }
+.page-card-body { font-size: 13px; color: var(--gray-500); line-height: 1.7; margin-bottom: 8px; }
+.page-card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.page-card-tag { background: var(--gray-50); border: 1px solid var(--gray-100); padding: 2px 8px; border-radius: 4px; font-size: 11px; color: var(--gray-500); }
+.page-card-tag.table-tag { background: #EBF5FF; border-color: #B3D7FF; color: var(--primary); }
+
+/* Event Card */
+.event-card { background: #fff; border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; }
+.event-card .event-name { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 4px; font-family: 'SF Mono', monospace; }
+.event-card .event-trigger { font-size: 13px; color: var(--gray-900); margin-bottom: 6px; }
+.event-card .event-actions { font-size: 12px; color: var(--gray-500); line-height: 1.7; }
+
+/* Category Label */
+.cat-label { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-bottom: 16px; }
+.cat-public { background: #D4EDDA; color: #155724; }
+.cat-ops { background: #CCE5FF; color: #004085; }
+.cat-intel { background: #FFF3CD; color: #856404; }
+.cat-system { background: #F8D7DA; color: #721C24; }
+.cat-v10 { background: #E2E3F1; color: #383D6E; }
+.cat-self { background: #D1ECF1; color: #0C5460; }
+
+/* Routine Card */
+.routine-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.routine-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+.routine-time { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
+.routine-time .time-label { background: var(--primary); color: #fff; padding: 2px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; flex-shrink: 0; min-width: 36px; text-align: center; }
+.routine-time .time-tasks { font-size: 13px; color: var(--gray-900); line-height: 1.7; }
+
+/* FAQ */
+.docs-faq-item { border-bottom: 1px solid var(--gray-100); }
+.docs-faq-q { width: 100%; text-align: left; padding: 16px 0; background: none; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--gray-900); font-family: inherit; gap: 12px; }
+.docs-faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.docs-faq-a p { padding: 0 0 16px; color: var(--gray-500); font-size: 14px; line-height: 1.7; }
+.docs-faq-item.active .docs-faq-a { max-height: 500px; }
+.docs-faq-icon { transition: transform 0.3s; font-size: 18px; flex-shrink: 0; }
+.docs-faq-item.active .docs-faq-icon { transform: rotate(45deg); }
+
+/* Glossary */
+.glossary-item { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+.glossary-term { font-weight: 700; font-size: 14px; color: var(--primary); min-width: 120px; flex-shrink: 0; }
+.glossary-def { font-size: 13px; color: var(--gray-500); line-height: 1.7; }
+
+/* V10 Map */
+.v10-row { display: grid; grid-template-columns: 2fr 2fr 2fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); font-size: 13px; align-items: center; }
+.v10-row.v10-header { font-weight: 700; color: var(--gray-900); background: var(--gray-50); padding: 10px 12px; border-radius: 8px 8px 0 0; border-bottom: 2px solid var(--gray-200); }
+.v10-row .v10-feat { font-weight: 600; color: var(--gray-900); }
+.v10-row .v10-page { color: var(--primary); }
+.v10-row .v10-table { color: var(--gray-500); font-family: 'SF Mono', monospace; font-size: 12px; }
+
+/* Sidebar Toggle */
+.docs-sidebar-toggle {
+  display: none; position: fixed; bottom: 20px; left: 20px; z-index: 200;
+  width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: #fff;
+  border: none; font-size: 20px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,102,255,0.3);
+  align-items: center; justify-content: center;
+}
+
+/* Mobile */
+@media(max-width:768px) {
+  .docs-sidebar { transform: translateX(-100%); }
+  .docs-sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.15); }
+  .docs-sidebar-toggle { display: flex; }
+  .docs-content { margin-left: 0; padding: 24px 16px 80px; }
+  .v10-row { grid-template-columns: 1fr; gap: 4px; }
+  .glossary-item { flex-direction: column; gap: 4px; }
+  .glossary-term { min-width: auto; }
+}
+
+/* Print */
+@media print {
+  .docs-sidebar, .docs-sidebar-toggle, .header, .footer { display: none !important; }
+  .docs-content { margin-left: 0 !important; padding: 0 !important; max-width: 100% !important; }
+  .docs-section { page-break-inside: avoid; }
+  .page-card, .event-card, .routine-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+}
+
+/* Scroll highlight */
+.docs-section:target h2 { animation: highlight-flash 1.5s ease; }
+@keyframes highlight-flash { 0%,100% { background: transparent; } 30% { background: rgba(0,102,255,0.08); } }
+
+/* Table overrides for docs */
+.docs-content .dash-table { font-size: 13px; margin-bottom: 24px; display: block; overflow-x: auto; }
+.docs-content .dash-table th { white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="admin.html">어드민</a>
+      <a href="docs.html" class="active">설명서</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- Sidebar Toggle (Mobile) -->
+<button class="docs-sidebar-toggle" id="sidebarToggle" aria-label="목차 열기">☰</button>
+
+<!-- Sidebar -->
+<aside class="docs-sidebar" id="docsSidebar">
+  <div class="docs-sidebar-header">
+    <h3>📖 시스템 설명서</h3>
+    <input type="text" class="docs-search" id="docsSearch" placeholder="검색어 입력...">
+  </div>
+  <nav class="docs-nav" id="docsNav">
+    <div class="docs-nav-group">
+      <span class="docs-nav-group-title">개요</span>
+      <a href="#overview">시스템 개요</a>
+    </div>
+    <div class="docs-nav-group">
+      <span class="docs-nav-group-title">구성</span>
+      <a href="#pages">페이지 목록 (36)</a>
+      <a href="#pages-public" class="sub">공개 (3)</a>
+      <a href="#pages-ops" class="sub">운영 (13)</a>
+      <a href="#pages-intel" class="sub">인텔리전스 (6)</a>
+      <a href="#pages-system" class="sub">시스템 (4)</a>
+      <a href="#pages-v10" class="sub">v10 신규 (8)</a>
+      <a href="#pages-self" class="sub">셀프서비스 (2)</a>
+    </div>
+    <div class="docs-nav-group">
+      <span class="docs-nav-group-title">데이터</span>
+      <a href="#tables">DB 테이블 (52)</a>
+      <a href="#tables-customer" class="sub">고객</a>
+      <a href="#tables-sales" class="sub">영업</a>
+      <a href="#tables-ops" class="sub">운영</a>
+      <a href="#tables-analytics" class="sub">분석/인텔리전스</a>
+      <a href="#tables-keywords" class="sub">키워드/효과</a>
+      <a href="#tables-advanced" class="sub">고급 모델링</a>
+    </div>
+    <div class="docs-nav-group">
+      <span class="docs-nav-group-title">자동화</span>
+      <a href="#events">EventHub 이벤트 (16+)</a>
+    </div>
+    <div class="docs-nav-group">
+      <span class="docs-nav-group-title">운영 가이드</span>
+      <a href="#routines">업무 루틴 가이드</a>
+      <a href="#routines-daily" class="sub">일일 루틴</a>
+      <a href="#routines-weekly" class="sub">주간 루틴</a>
+      <a href="#routines-monthly" class="sub">월간 루틴</a>
+    </div>
+    <div class="docs-nav-group">
+      <span class="docs-nav-group-title">기획</span>
+      <a href="#v10map">v10 기능 매핑</a>
+    </div>
+    <div class="docs-nav-group">
+      <span class="docs-nav-group-title">참고</span>
+      <a href="#faq">FAQ (10)</a>
+      <a href="#glossary">용어 사전 (19)</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- Main Content -->
+<div class="docs-layout">
+<main class="docs-content">
+
+<h1>ONDA 시스템 설명서</h1>
+<p class="docs-updated">최종 업데이트: 2026-03-15 | 버전: v10</p>
+
+<!-- ===== Section 1: 시스템 개요 ===== -->
+<section class="docs-section" id="overview">
+<h2>1. 시스템 개요</h2>
+
+<h3>ONDA Selfmarketing이란?</h3>
+<p>ONDA는 <strong>AI 기반 네이버 플레이스 순위 관리 서비스</strong>입니다. 매장 사장님들의 네이버 플레이스 검색 순위를 자동으로 관리하고, 트래픽 투입부터 리뷰 관리, 결제, 리텐션까지 전체 고객 라이프사이클을 자동화합니다.</p>
+
+<h3>핵심 아키텍처</h3>
+<ul>
+  <li><strong>프론트엔드:</strong> Pure HTML/CSS/JS (모바일 퍼스트, 375px 기준)</li>
+  <li><strong>백엔드:</strong> Supabase (PostgreSQL + REST API + RPC)</li>
+  <li><strong>자동화 엔진:</strong> EventHub 기반 이벤트 드리븐 아키텍처 (16+ 이벤트 타입)</li>
+  <li><strong>최적화 알고리즘:</strong> Thompson Sampling (밴딧 알고리즘)으로 매체 선택 최적화</li>
+  <li><strong>DB 규모:</strong> 52개 테이블, 36개 페이지</li>
+</ul>
+
+<h3>고객 라이프사이클</h3>
+<p>고객은 아래 7단계 파이프라인을 거칩니다:</p>
+<div class="flow-diagram">
+  <div class="flow-row">
+    <div class="flow-step">🔍 lead</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step primary">🧪 trial</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step primary">📋 onboarding</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step accent">✅ active</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background:#FFF3CD;border-color:#FFC107;">⚠️ at_risk</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background:#F8D7DA;border-color:#DC3545;color:#721C24;">❌ churned</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background:#E2E3F1;border-color:#6C63FF;color:#383D6E;">🔄 winback</div>
+  </div>
+</div>
+
+<h3>핵심 운영 루프</h3>
+<div class="flow-diagram">
+  <div class="flow-row">
+    <div class="flow-step">🔍 핫리드 발굴</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">📝 체험 신청</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step primary">💬 카카오 인증</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step primary">🚀 자동 투입</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step accent">📊 순위 모니터링</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step accent">💰 유료 전환</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background:var(--dark);color:#fff;">🔒 리텐션</div>
+  </div>
+</div>
+
+<h3>EventHub 드리븐 자동화</h3>
+<p>모든 주요 비즈니스 액션은 이벤트로 기록되고, 연쇄 액션을 자동 트리거합니다. 예를 들어 <code>kakao_friend_verified</code> 이벤트가 발생하면 → 고객 status가 trial로 변경되고 → 체험 시퀀스가 자동 생성되고 → 카카오 시퀀스가 시작됩니다. 총 16개 이상의 이벤트 타입이 등록되어 있습니다.</p>
+
+<h3>Thompson Sampling 매체 최적화</h3>
+<p>트래픽 투입에 사용하는 외부 매체를 선택할 때 <strong>Thompson Sampling</strong>(밴딧 알고리즘)을 사용합니다. 각 매체의 성공(alpha)/실패(beta) 파라미터를 베타 분포로 모델링하여, 탐색(exploration)과 활용(exploitation)을 자동으로 균형있게 수행합니다.</p>
+</section>
+
+<!-- ===== Section 2: 페이지 목록 ===== -->
+<section class="docs-section" id="pages">
+<h2>2. 페이지 목록 (34+2)</h2>
+<p>총 36개 페이지가 6개 카테고리로 분류됩니다.</p>
+
+<!-- 공개 -->
+<div id="pages-public" style="scroll-margin-top:80px;">
+<h3><span class="cat-label cat-public">공개 Public</span> 3개</h3>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">1</div>
+    <div class="page-card-title"><a href="index.html">index.html</a> - 랜딩 페이지</div>
+  </div>
+  <div class="page-card-body">서비스 소개, 핵심 기능 설명, 고객 수 카운터, 가격표 요약, CTA 버튼. 방문자가 처음 접하는 페이지로 무료체험 전환을 유도합니다.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag">관련 테이블 없음</span>
+    <span class="page-card-tag">CTA</span>
+    <span class="page-card-tag">반응형</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">2</div>
+    <div class="page-card-title"><a href="pricing.html">pricing.html</a> - 가격 안내</div>
+  </div>
+  <div class="page-card-body">Starter(40,000원)/Growth(80,000원)/Pro(150,000원) 패키지 상세 비교. 각 패키지별 리뷰 수, 리워드 타수, 부가 기능을 표로 비교합니다.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag">관련 테이블 없음</span>
+    <span class="page-card-tag">가격 비교표</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">3</div>
+    <div class="page-card-title"><a href="trial.html">trial.html</a> - 무료체험 신청</div>
+  </div>
+  <div class="page-card-body">3단계 폼: ① 매장정보 입력(플레이스 URL, 키워드, 전화번호) → ② 카카오 채널 인증(인증코드 발급/검증) → ③ 완료 및 안내. 체험 신청과 동시에 카카오 시퀀스가 시작됩니다.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_customers</span>
+    <span class="page-card-tag table-tag">sm_trial_signups</span>
+    <span class="page-card-tag table-tag">sm_kakao_friends</span>
+    <span class="page-card-tag table-tag">sm_trial_sequences</span>
+    <span class="page-card-tag table-tag">sm_kakao_sequences</span>
+  </div>
+</div>
+</div>
+
+<!-- 운영 -->
+<div id="pages-ops" style="scroll-margin-top:80px;">
+<h3><span class="cat-label cat-ops">운영 Operations</span> 13개</h3>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">4</div>
+    <div class="page-card-title"><a href="admin.html">admin.html</a> - 어드민 대시보드</div>
+  </div>
+  <div class="page-card-body">관리자 전용 대시보드. KPI 요약(전환율, 이탈율, 매출), 자동화 ON/OFF 토글, 파이프라인 단계별 고객 수. PIN 보호(기본값 0000). 좌측 사이드바에서 전체 운영 페이지 네비게이션.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_kpi_daily</span>
+    <span class="page-card-tag table-tag">sm_automation_settings</span>
+    <span class="page-card-tag table-tag">sm_pipeline_stages</span>
+    <span class="page-card-tag">PIN 보호</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">5</div>
+    <div class="page-card-title"><a href="hotleads.html">hotleads.html</a> - 핫리드 관리</div>
+  </div>
+  <div class="page-card-body">전환 가능성 높은 잠재 고객 발굴 및 관리. 핫리드 점수 산정, 상태 관리(신규/접촉중/전환/보류), 우선순위 기반 정렬.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_targets</span>
+    <span class="page-card-tag table-tag">sm_hotleads</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">6</div>
+    <div class="page-card-title"><a href="customers.html">customers.html</a> - 고객 관리</div>
+  </div>
+  <div class="page-card-body">전체 고객 목록 및 상세 관리. 세그먼트 A(VIP)/B(안정)/C(관심)/D(위험) 분류, 온보딩 부스트 설정(첫 7일 강화 투입), 이탈 예측 점수 및 요인 분석.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_customers</span>
+    <span class="page-card-tag table-tag">sm_customer_segments</span>
+    <span class="page-card-tag table-tag">sm_churn_scores</span>
+    <span class="page-card-tag table-tag">sm_onboarding_boosts</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">7</div>
+    <div class="page-card-title"><a href="messages.html">messages.html</a> - 메시지 발송</div>
+  </div>
+  <div class="page-card-body">타겟 대상 메시지 발송 관리. A/B 테스트(두 가지 메시지 비교), 타겟풀 선택, 발송 스케줄 설정. 발송 상태(sent/read/clicked/converted) 추적.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_messages</span>
+    <span class="page-card-tag table-tag">sm_targets</span>
+    <span class="page-card-tag">A/B 테스트</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">8</div>
+    <div class="page-card-title"><a href="remarketing.html">remarketing.html</a> - 리마케팅 큐</div>
+  </div>
+  <div class="page-card-body">이탈/미전환 고객 대상 4단계 리마케팅 시퀀스 관리. 단계별(1→2→3→4) 메시지 유형과 발송 시점을 설정하고 전환 여부를 추적합니다.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_remarketing_queue</span>
+    <span class="page-card-tag">4단계 시퀀스</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">9</div>
+    <div class="page-card-title"><a href="kakao.html">kakao.html</a> - 카카오 채널 관리</div>
+  </div>
+  <div class="page-card-body">카카오 채널 친구 추가 관리. 인증코드 발급 및 검증, 카카오 자동 시퀀스(알림톡/친구톡) 설정. 채널 친구 목록과 인증 상태 관리.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_kakao_friends</span>
+    <span class="page-card-tag table-tag">sm_kakao_sequences</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">10</div>
+    <div class="page-card-title"><a href="trial-sequence.html">trial-sequence.html</a> - 체험 시퀀스</div>
+  </div>
+  <div class="page-card-body">체험 기간 중 자동 메시지 관리. D+1 순위 확인, D+3 변동 알림, D+7 분석 리포트, D+14 경쟁사 비교 등 D+1~D+30 자동 메시지 시퀀스를 설정합니다.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_trial_sequences</span>
+    <span class="page-card-tag">D+1~D+30</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">11</div>
+    <div class="page-card-title"><a href="vendor.html">vendor.html</a> - 외주 포탈</div>
+  </div>
+  <div class="page-card-body">매체별 외주 주문 관리. 주문 생성/상태 추적, 안티패턴 현황(주말 집중, 매체 편중 등), 요일별 가중치 설정. 매체별 실적 비교.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_vendor_orders</span>
+    <span class="page-card-tag table-tag">sm_anti_pattern_params</span>
+    <span class="page-card-tag">안티패턴</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">12</div>
+    <div class="page-card-title"><a href="payments.html">payments.html</a> - 결제 관리</div>
+  </div>
+  <div class="page-card-body">결제 내역 조회 및 실패 대응 플로우 관리. 결제 상태(paid/pending/failed/grace/refunded) 추적, 자동 리마인더, 환불금 계산.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_payments</span>
+    <span class="page-card-tag table-tag">sm_payment_failures</span>
+    <span class="page-card-tag">실패 자동 대응</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">13</div>
+    <div class="page-card-title"><a href="targets.html">targets.html</a> - 타겟 관리</div>
+  </div>
+  <div class="page-card-body">메시지 발송 대상 타겟풀 관리. 매장명, 키워드, 전화번호, 상태, 우선순위 기반으로 발송 대상을 관리합니다.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_targets</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">14</div>
+    <div class="page-card-title"><a href="referral.html">referral.html</a> - 추천인 관리</div>
+  </div>
+  <div class="page-card-body">추천 코드 발급, 추천인-피추천인 전환 추적, 보상 관리. 추천 링크를 통한 가입 시 추천인에게 자동 보상합니다.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_referrals</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">15</div>
+    <div class="page-card-title"><a href="agency.html">agency.html</a> - 대행사 관리</div>
+  </div>
+  <div class="page-card-body">대행사 파트너 등록 및 실적 관리. 대행사별 수수료율, 관리 고객 수, 전환 실적을 추적합니다.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_agencies</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">16</div>
+    <div class="page-card-title"><a href="community.html">community.html</a> - 커뮤니티 관리</div>
+  </div>
+  <div class="page-card-body">커뮤니티 플랫폼(카페, 블로그 등) 대상 마케팅. 타겟 커뮤니티 등록, 게시물 관리, 응답 추적.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_community_targets</span>
+    <span class="page-card-tag table-tag">sm_community_posts</span>
+    <span class="page-card-tag table-tag">sm_community_responses</span>
+  </div>
+</div>
+</div>
+
+<!-- 인텔리전스 -->
+<div id="pages-intel" style="scroll-margin-top:80px;">
+<h3><span class="cat-label cat-intel">인텔리전스 Intelligence</span> 6개</h3>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">17</div>
+    <div class="page-card-title"><a href="analytics.html">analytics.html</a> - 분석 대시보드</div>
+  </div>
+  <div class="page-card-body">종합 분석 페이지. A/B 테스트 결과 비교, 캐시플로우 차트, 키워드 효율 분석(볼륨 대비 N2 변화), Multi-lag 측정(1d/3d/5d/7d/10d/14d 지연 효과).</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_ab_tests</span>
+    <span class="page-card-tag table-tag">sm_cashflow</span>
+    <span class="page-card-tag table-tag">sm_keyword_efficiency</span>
+    <span class="page-card-tag table-tag">sm_lag_measurements</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">18</div>
+    <div class="page-card-title"><a href="engine.html">engine.html</a> - 밴딧 엔진</div>
+  </div>
+  <div class="page-card-body">Thompson Sampling 기반 매체 선택 최적화 엔진. 각 매체의 alpha/beta 파라미터 시각화, 베타 분포 차트, 매체 선택 시뮬레이션, 롤아웃 단계 관리.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_source_leaderboard</span>
+    <span class="page-card-tag table-tag">sm_source_beta_params</span>
+    <span class="page-card-tag">Thompson Sampling</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">19</div>
+    <div class="page-card-title"><a href="blog-intel.html">blog-intel.html</a> - 블로그 인텔</div>
+  </div>
+  <div class="page-card-body">블로그 품질 필터링 및 스냅샷 관리. 블로그 품질 점수 산정, 필터링 여부 추적, 일별 스냅샷으로 품질 변화 모니터링.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_blog_snapshots</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">20</div>
+    <div class="page-card-title"><a href="hypotheses.html">hypotheses.html</a> - 가설 관리</div>
+  </div>
+  <div class="page-card-body">데이터 기반 가설 수립 및 검증. 교란변수 식별, 가설 간 충돌 감지, 검증 조건(성공/실패 기준) 설정. 신뢰도 트리로 가설 구조화.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_hypotheses</span>
+    <span class="page-card-tag table-tag">sm_hypothesis_results</span>
+    <span class="page-card-tag">교란변수</span>
+    <span class="page-card-tag">충돌감지</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">21</div>
+    <div class="page-card-title"><a href="leaderboard.html">leaderboard.html</a> - 매체 리더보드</div>
+  </div>
+  <div class="page-card-body">매체별 순위 및 스코어 시각화. Thompson Sampling 결과 기반 매체 순위, alpha/beta 파라미터, 승률 차트.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_source_leaderboard</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">22</div>
+    <div class="page-card-title"><a href="keywords.html">keywords.html</a> - 키워드 분석</div>
+  </div>
+  <div class="page-card-body">키워드 성과 분석. 카니발리제이션(키워드 간 트래픽 잠식) 감지, 교차 효과(한 키워드가 다른 키워드에 미치는 영향) 분석.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_keywords</span>
+    <span class="page-card-tag table-tag">sm_keyword_cannibalization</span>
+    <span class="page-card-tag table-tag">sm_keyword_cross_effects</span>
+  </div>
+</div>
+</div>
+
+<!-- 시스템 -->
+<div id="pages-system" style="scroll-margin-top:80px;">
+<h3><span class="cat-label cat-system">시스템 System</span> 4개</h3>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">23</div>
+    <div class="page-card-title"><a href="dashboard.html">dashboard.html</a> - 운영 대시보드</div>
+  </div>
+  <div class="page-card-body">전체 KPI 한눈에 보기. 일별 주요 지표(전환율, 이탈율, 매출, 활성 고객 수) 모니터링, 임계값 기반 경고/위험 알림.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_kpi_daily</span>
+    <span class="page-card-tag table-tag">sm_kpi_thresholds</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">24</div>
+    <div class="page-card-title"><a href="events.html">events.html</a> - 이벤트 로그</div>
+  </div>
+  <div class="page-card-body">EventHub 이벤트 조회. 이벤트 타입별 필터링, 시간순 정렬, 페이로드 상세 보기. 시스템 디버깅과 감사에 활용.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_events</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">25</div>
+    <div class="page-card-title"><a href="audit.html">audit.html</a> - 감사 로그</div>
+  </div>
+  <div class="page-card-body">시스템 변경 이력 추적. 누가(actor), 무엇을(action_type), 어디서(target_table), 이전값/이후값을 기록. 보안 감사와 문제 추적에 활용.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_audit_log</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">26</div>
+    <div class="page-card-title"><a href="decisions.html">decisions.html</a> - 의사결정 로그</div>
+  </div>
+  <div class="page-card-body">AI 자동 판단 기록. 의사결정 유형, 취한 액션, 판단 근거(reasoning), 신뢰도(confidence)를 기록하여 AI 판단의 투명성을 확보.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_decision_log</span>
+  </div>
+</div>
+</div>
+
+<!-- v10 신규 -->
+<div id="pages-v10" style="scroll-margin-top:80px;">
+<h3><span class="cat-label cat-v10">v10 신규</span> 8개</h3>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">27</div>
+    <div class="page-card-title"><a href="constraints.html">constraints.html</a> - 제약조건 관리</div>
+  </div>
+  <div class="page-card-body">제약조건 enforcer 시뮬레이터. 비즈니스 규칙(일일 최대 투입량, 매체 비중 상한 등)을 정의하고, 위반 시 자동 감지 및 추적. 시뮬레이션으로 사전 검증 가능.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_constraints</span>
+    <span class="page-card-tag table-tag">sm_constraint_violations</span>
+    <span class="page-card-tag">시뮬레이터</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">28</div>
+    <div class="page-card-title"><a href="conflicts.html">conflicts.html</a> - 충돌 매트릭스</div>
+  </div>
+  <div class="page-card-body">제약조건 간 충돌 감지 및 해소. 두 제약이 동시에 만족 불가능한 경우를 매트릭스로 시각화하고, 우선순위 기반 해소 전략을 제공.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_conflict_matrix</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">29</div>
+    <div class="page-card-title"><a href="season.html">season.html</a> - 시즌 캘린더</div>
+  </div>
+  <div class="page-card-body">시즌 이벤트(명절, 방학, 연휴 등) 등록 및 관리. 시즌별 검색량 변화를 반영한 보상 계수(impact_factor) 설정으로 N2 변동을 보정.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_season_calendar</span>
+    <span class="page-card-tag">시즌 보상</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">30</div>
+    <div class="page-card-title"><a href="decay.html">decay.html</a> - 디케이 프로파일</div>
+  </div>
+  <div class="page-card-body">투입 효과의 시간에 따른 감쇠 모델링. 매체별 반감기(half-life), 감쇠율(decay_rate), 모델 유형(지수/선형/시그모이드) 관리.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_decay_profile</span>
+    <span class="page-card-tag">반감기 모델</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">31</div>
+    <div class="page-card-title"><a href="transitions.html">transitions.html</a> - 매체 전환 효과</div>
+  </div>
+  <div class="page-card-body">매체 간 전환 시 발생하는 영향 분석. A매체→B매체 전환 시 효과 증감을 수치화하여 매체 포트폴리오 최적화에 활용.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_source_transition_effects</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">32</div>
+    <div class="page-card-title"><a href="health.html">health.html</a> - 시스템 헬스</div>
+  </div>
+  <div class="page-card-body">11개 헬스 체크 항목 모니터링. DB 연결, API 응답시간, 크론잡 실행, 이벤트 큐 적체, 외부 API 상태 등을 실시간 체크.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_system_health</span>
+    <span class="page-card-tag">11개 체크 항목</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">33</div>
+    <div class="page-card-title"><a href="kpi.html">kpi.html</a> - KPI 대시보드</div>
+  </div>
+  <div class="page-card-body">일별 KPI 추적 및 목표 대비 달성률 시각화. 지표별 임계값(warning/critical) 설정, 트렌드 차트, 전주/전월 대비 변화율.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_kpi_daily</span>
+    <span class="page-card-tag table-tag">sm_kpi_thresholds</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">34</div>
+    <div class="page-card-title"><a href="cashflow.html">cashflow.html</a> - 캐시플로우 분석</div>
+  </div>
+  <div class="page-card-body">수입(revenue)/지출(cost)/이익(profit) 추적. 카테고리별 분류, 일별/주별/월별 트렌드, 손익분기점 분석.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag table-tag">sm_cashflow</span>
+  </div>
+</div>
+</div>
+
+<!-- 셀프서비스 -->
+<div id="pages-self" style="scroll-margin-top:80px;">
+<h3><span class="cat-label cat-self">셀프서비스 Self-service</span> 2개</h3>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">35</div>
+    <div class="page-card-title"><a href="my.html">my.html</a> - 고객 셀프서비스 포털</div>
+  </div>
+  <div class="page-card-body">고객이 직접 접속하여 내 매장 순위, 구독 현황, 결제 내역, 주간/월간 리포트를 조회하는 포털. 전화번호 기반 로그인.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag">전화번호 로그인</span>
+    <span class="page-card-tag">순위 조회</span>
+    <span class="page-card-tag">리포트</span>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="page-card-header">
+    <div class="page-card-num">36</div>
+    <div class="page-card-title"><a href="docs.html">docs.html</a> - 시스템 설명서</div>
+  </div>
+  <div class="page-card-body">현재 보고 있는 이 페이지. 전체 시스템 문서화 - 페이지 목록, DB 테이블, EventHub 이벤트, 업무 루틴, v10 기능 매핑, FAQ, 용어 사전.</div>
+  <div class="page-card-meta">
+    <span class="page-card-tag">문서</span>
+    <span class="page-card-tag">사이드바 네비게이션</span>
+    <span class="page-card-tag">검색</span>
+  </div>
+</div>
+</div>
+
+</section>
+
+<!-- ===== Section 3: DB 테이블 목록 ===== -->
+<section class="docs-section" id="tables">
+<h2>3. DB 테이블 목록 (52개)</h2>
+<p>Supabase(PostgreSQL) 기반. 모든 테이블은 <code>sm_</code> 접두사를 사용합니다.</p>
+
+<!-- 고객 -->
+<div id="tables-customer" style="scroll-margin-top:80px;">
+<h3>고객 (Customer) - 5개</h3>
+<table class="dash-table">
+<thead><tr><th>테이블</th><th>용도</th><th>주요 컬럼</th></tr></thead>
+<tbody>
+<tr><td><code>sm_customers</code></td><td>고객 마스터</td><td>id, place_name, keyword, phone, package(starter/growth/pro), status(lead/trial/onboarding/active/at_risk/churned/winback), churn_risk_score, kakao_verified, created_at</td></tr>
+<tr><td><code>sm_customer_notes</code></td><td>고객 메모</td><td>customer_id, note, created_at</td></tr>
+<tr><td><code>sm_customer_segments</code></td><td>고객 세그먼트 (A/B/C/D)</td><td>customer_id, segment, criteria</td></tr>
+<tr><td><code>sm_churn_scores</code></td><td>이탈 위험 점수</td><td>customer_id, score, factors, calculated_at</td></tr>
+<tr><td><code>sm_onboarding_boosts</code></td><td>온보딩 부스트 설정</td><td>customer_id, day_range, volume, reviews</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 영업 -->
+<div id="tables-sales" style="scroll-margin-top:80px;">
+<h3>영업 (Sales) - 13개</h3>
+<table class="dash-table">
+<thead><tr><th>테이블</th><th>용도</th><th>주요 컬럼</th></tr></thead>
+<tbody>
+<tr><td><code>sm_targets</code></td><td>발송 타겟 풀</td><td>place_name, keyword, phone, status, priority</td></tr>
+<tr><td><code>sm_messages</code></td><td>메시지 발송 기록</td><td>target_id, type, status(sent/read/clicked/converted), sent_at</td></tr>
+<tr><td><code>sm_hotleads</code></td><td>핫리드</td><td>target_id, score, reason, status</td></tr>
+<tr><td><code>sm_trial_signups</code></td><td>체험 신청</td><td>customer_id, place_url, keyword, status</td></tr>
+<tr><td><code>sm_kakao_friends</code></td><td>카카오 친구</td><td>customer_id, kakao_id, verified, code</td></tr>
+<tr><td><code>sm_kakao_sequences</code></td><td>카카오 자동 시퀀스</td><td>customer_id, stage, message_template, scheduled_at, status</td></tr>
+<tr><td><code>sm_trial_sequences</code></td><td>체험 시퀀스</td><td>customer_id, day_offset, action_type, message, scheduled_at, status</td></tr>
+<tr><td><code>sm_referrals</code></td><td>추천</td><td>referral_code, referrer_id, referred_id, status, reward</td></tr>
+<tr><td><code>sm_agencies</code></td><td>대행사</td><td>name, contact, commission_rate, status</td></tr>
+<tr><td><code>sm_remarketing_queue</code></td><td>리마케팅 큐</td><td>customer_id, stage(1-4), message_type, scheduled_at, status</td></tr>
+<tr><td><code>sm_community_targets</code></td><td>커뮤니티 타겟</td><td>platform, url, keyword</td></tr>
+<tr><td><code>sm_community_posts</code></td><td>커뮤니티 게시물</td><td>target_id, content, posted_at</td></tr>
+<tr><td><code>sm_community_responses</code></td><td>커뮤니티 응답</td><td>post_id, response, responded_at</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 운영 -->
+<div id="tables-ops" style="scroll-margin-top:80px;">
+<h3>운영 (Operations) - 5개</h3>
+<table class="dash-table">
+<thead><tr><th>테이블</th><th>용도</th><th>주요 컬럼</th></tr></thead>
+<tbody>
+<tr><td><code>sm_vendor_orders</code></td><td>외주 주문</td><td>customer_id, source_name, keyword, total_volume, status, order_date</td></tr>
+<tr><td><code>sm_payments</code></td><td>결제</td><td>customer_id, amount, package, status(paid/pending/failed/grace/refunded), payment_date</td></tr>
+<tr><td><code>sm_payment_failures</code></td><td>결제 실패</td><td>payment_id, failure_count, last_failed_at, next_action</td></tr>
+<tr><td><code>sm_automation_settings</code></td><td>자동화 설정</td><td>key, enabled, last_run, interval</td></tr>
+<tr><td><code>sm_pipeline_stages</code></td><td>파이프라인 단계</td><td>stage_name, count, order</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 분석/인텔리전스 -->
+<div id="tables-analytics" style="scroll-margin-top:80px;">
+<h3>분석/인텔리전스 (Analytics/Intelligence) - 10개</h3>
+<table class="dash-table">
+<thead><tr><th>테이블</th><th>용도</th><th>주요 컬럼</th></tr></thead>
+<tbody>
+<tr><td><code>sm_kpi_daily</code></td><td>일별 KPI</td><td>metric_name, date, value, target, achievement_pct</td></tr>
+<tr><td><code>sm_kpi_thresholds</code></td><td>KPI 임계값</td><td>metric_name, warning_threshold, critical_threshold</td></tr>
+<tr><td><code>sm_events</code></td><td>이벤트 로그</td><td>event_type, payload, customer_id, created_at</td></tr>
+<tr><td><code>sm_audit_log</code></td><td>감사 로그</td><td>actor, action_type, target_table, target_id, old_value, new_value</td></tr>
+<tr><td><code>sm_decision_log</code></td><td>의사결정 로그</td><td>decision_type, action_taken, reasoning, confidence</td></tr>
+<tr><td><code>sm_ab_tests</code></td><td>A/B 테스트</td><td>test_name, variant_a, variant_b, status, winner</td></tr>
+<tr><td><code>sm_source_leaderboard</code></td><td>매체 리더보드</td><td>source_name, alpha, beta, score, rank</td></tr>
+<tr><td><code>sm_source_beta_params</code></td><td>매체 베타 파라미터</td><td>source_name, beta_param, updated_at</td></tr>
+<tr><td><code>sm_hypotheses</code></td><td>가설</td><td>hypothesis, status, confidence, created_at</td></tr>
+<tr><td><code>sm_hypothesis_results</code></td><td>가설 검증 결과</td><td>hypothesis_id, result, evidence, verified_at</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 키워드/효과 -->
+<div id="tables-keywords" style="scroll-margin-top:80px;">
+<h3>키워드/효과 (Keywords/Effects) - 9개</h3>
+<table class="dash-table">
+<thead><tr><th>테이블</th><th>용도</th><th>주요 컬럼</th></tr></thead>
+<tbody>
+<tr><td><code>sm_keywords</code></td><td>키워드 마스터</td><td>keyword, search_volume, competition</td></tr>
+<tr><td><code>sm_keyword_cannibalization</code></td><td>키워드 카니발리제이션</td><td>keyword_a, keyword_b, overlap_score</td></tr>
+<tr><td><code>sm_keyword_cross_effects</code></td><td>키워드 교차 효과</td><td>keyword_a, keyword_b, effect_direction, magnitude</td></tr>
+<tr><td><code>sm_keyword_efficiency</code></td><td>키워드 효율</td><td>keyword, volume, n2_delta, efficiency</td></tr>
+<tr><td><code>sm_lag_measurements</code></td><td>지연 측정</td><td>order_date, source, volume, lag_1d, lag_3d, lag_5d, lag_7d, lag_10d, lag_14d</td></tr>
+<tr><td><code>sm_recovery_estimates</code></td><td>복구 추정</td><td>event_type, start_date, n2_drop, estimated_recovery_days</td></tr>
+<tr><td><code>sm_blog_snapshots</code></td><td>블로그 스냅샷</td><td>blog_id, quality_score, is_filtered, snapshot_date</td></tr>
+<tr><td><code>sm_compound_effects</code></td><td>복합 효과</td><td>effect_type, magnitude, duration</td></tr>
+<tr><td><code>sm_place_features</code></td><td>플레이스 특성</td><td>place_id, feature_name, value</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 고급 모델링 -->
+<div id="tables-advanced" style="scroll-margin-top:80px;">
+<h3>고급 모델링 (Advanced) - 10개</h3>
+<table class="dash-table">
+<thead><tr><th>테이블</th><th>용도</th><th>주요 컬럼</th></tr></thead>
+<tbody>
+<tr><td><code>sm_confidence_tree</code></td><td>신뢰도 트리</td><td>node_id, parent_id, condition, confidence_level</td></tr>
+<tr><td><code>sm_decay_profile</code></td><td>디케이 프로파일</td><td>source, half_life, decay_rate, model_type</td></tr>
+<tr><td><code>sm_season_calendar</code></td><td>시즌 캘린더</td><td>event_name, start_date, end_date, impact_factor</td></tr>
+<tr><td><code>sm_source_transition_effects</code></td><td>매체 전환 효과</td><td>from_source, to_source, transition_effect</td></tr>
+<tr><td><code>sm_system_health</code></td><td>시스템 헬스</td><td>check_name, status, last_checked, details</td></tr>
+<tr><td><code>sm_conflict_matrix</code></td><td>충돌 매트릭스</td><td>constraint_a, constraint_b, conflict_type, resolution</td></tr>
+<tr><td><code>sm_rollout_phases</code></td><td>롤아웃 단계</td><td>phase, target_pct, status, started_at</td></tr>
+<tr><td><code>sm_anti_pattern_params</code></td><td>안티패턴 파라미터</td><td>pattern_name, threshold, current_value, status</td></tr>
+<tr><td><code>sm_cashflow</code></td><td>캐시플로우</td><td>date, revenue, cost, profit, category</td></tr>
+<tr><td><code>sm_constraints</code></td><td>제약조건</td><td>constraint_name, rule, priority, enabled</td></tr>
+</tbody>
+</table>
+<p style="margin-top:8px; font-size:13px; color:var(--gray-500);">* <code>sm_constraint_violations</code> 테이블은 sm_constraints와 함께 사용됩니다 (constraint_id, violation_detail, detected_at).</p>
+</div>
+
+</section>
+
+<!-- ===== Section 4: EventHub 이벤트 ===== -->
+<section class="docs-section" id="events">
+<h2>4. EventHub 이벤트 (16+)</h2>
+<p>EventHub는 이벤트 기반 자동화 엔진입니다. 이벤트가 발생하면 등록된 연쇄 액션이 자동으로 트리거됩니다. 모든 이벤트는 <code>sm_events</code> 테이블에 기록됩니다.</p>
+
+<div class="event-card">
+  <div class="event-name">1. kakao_friend_verified</div>
+  <div class="event-trigger">트리거: 카카오 채널 친구 인증 완료 시</div>
+  <div class="event-actions">→ 고객 status를 <code>trial</code>로 변경 → 체험 시퀀스(D+1~D+30) 생성 → 카카오 자동 시퀀스 생성</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">2. trial_applied</div>
+  <div class="event-trigger">트리거: 체험 신청 완료 시</div>
+  <div class="event-actions">→ KPI 카운터 증가 (<code>sm_kpi_daily</code> trial_count +1)</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">3. trial_converted</div>
+  <div class="event-trigger">트리거: 체험 → 유료 전환 시</div>
+  <div class="event-actions">→ 외주 주문 자동 생성 (<code>sm_vendor_orders</code>) → 결제 기록 생성 (<code>sm_payments</code>) → KPI 업데이트 (conversion_rate)</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">4. onboarding_completed</div>
+  <div class="event-trigger">트리거: 온보딩 완료 시</div>
+  <div class="event-actions">→ 고객 status를 <code>active</code>로 변경 → 온보딩 부스트 종료</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">5. churn_risk_detected</div>
+  <div class="event-trigger">트리거: 이탈 위험 점수 60점 이상 감지 시</div>
+  <div class="event-actions">→ 리마케팅 큐 추가 (<code>sm_remarketing_queue</code> stage 1) → 위험 알림 생성 → 고객 status를 <code>at_risk</code>로 변경</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">6. payment_failed</div>
+  <div class="event-trigger">트리거: 결제 실패 시</div>
+  <div class="event-actions">→ 결제 실패 핸들러 RPC 호출 → <code>sm_payment_failures</code> 기록 → 실패 카운트에 따른 자동 대응 (즉시/24h/48h/7일)</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">7. customer_churned</div>
+  <div class="event-trigger">트리거: 고객 해지(churned) 시</div>
+  <div class="event-actions">→ 환불금 계산 (잔여 기간 비례) → 외주 주문 중단 → 30일 후 윈백 시퀀스 스케줄</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">8. message_sent</div>
+  <div class="event-trigger">트리거: 메시지 발송 시</div>
+  <div class="event-actions">→ 발송 스케줄 업데이트 → 타겟풀 상태 추적 → KPI 발송 카운터 증가</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">9. referral_converted</div>
+  <div class="event-trigger">트리거: 추천 링크를 통한 가입 전환 시</div>
+  <div class="event-actions">→ 추천인 상태 업데이트 (<code>sm_referrals</code> status → converted) → 추천인 보상 지급</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">10. blog_filtered</div>
+  <div class="event-trigger">트리거: 블로그가 네이버에 의해 필터링(비노출) 시</div>
+  <div class="event-actions">→ 블로그 스냅샷 업데이트 (<code>is_filtered = true</code>) → 품질 저하 알림 → 해당 블로그 투입 중단</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">11. logic_change_detected</div>
+  <div class="event-trigger">트리거: 네이버 로직 변경 감지 시 (3.5일 주기)</div>
+  <div class="event-actions">→ 크리티컬 알림 발송 → 48시간 신규 주문 중단 → 기존 주문 효과 재평가</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">12. source_health_alert</div>
+  <div class="event-trigger">트리거: 특정 매체의 효과 이상 감지 시</div>
+  <div class="event-actions">→ 리더보드 베타 파라미터 조정 (beta +1) → 해당 매체 사용 비중 자동 감소 → 대체 매체 탐색</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">13. season_event_started</div>
+  <div class="event-trigger">트리거: 시즌 이벤트(명절, 방학 등) 시작 시</div>
+  <div class="event-actions">→ 탐지 임계값 조정 (시즌 변동 허용) → 시즌 보상 계수 적용 → N2 평가 기준 보정</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">14. rollout_phase_advanced</div>
+  <div class="event-trigger">트리거: 롤아웃 단계 진행 시 (phase N → N+1)</div>
+  <div class="event-actions">→ A/B 테스트 단계 관리 → 대상 고객 비율 확대 (target_pct 증가) → 이전 단계 결과 기록</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">15. payment_overdue</div>
+  <div class="event-trigger">트리거: 결제일 초과 (연체) 시</div>
+  <div class="event-actions">→ 대기 중 외주 주문 취소 → 24시간 간격 리마인더 발송 → 7일 후 자동 해지 스케줄</div>
+</div>
+
+<div class="event-card">
+  <div class="event-name">16. vendor_order_completed</div>
+  <div class="event-trigger">트리거: 외주 주문 완료(효과 확인) 시</div>
+  <div class="event-actions">→ 리더보드 alpha/beta 업데이트 (성공 시 alpha+1, 실패 시 beta+1) → Thompson Sampling 분포 갱신 → 매체 순위 재계산</div>
+</div>
+
+</section>
+
+<!-- ===== Section 5: 업무 루틴 가이드 ===== -->
+<section class="docs-section" id="routines">
+<h2>5. 업무 루틴 가이드</h2>
+<p>효율적인 운영을 위한 일일/주간/월간 루틴 가이드입니다.</p>
+
+<div id="routines-daily" style="scroll-margin-top:80px;">
+<h3>일일 루틴</h3>
+<div class="routine-card">
+  <h4>매일 반복</h4>
+  <div class="routine-time">
+    <span class="time-label">아침</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li><a href="kpi.html">KPI 대시보드</a> 확인 - 전일 지표 리뷰</li>
+        <li><a href="customers.html">고객 관리</a> - 이탈 위험 고객(at_risk) 체크</li>
+        <li><a href="payments.html">결제 관리</a> - 결제 실패 건 대응</li>
+      </ul>
+    </div>
+  </div>
+  <div class="routine-time">
+    <span class="time-label">오후</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li><a href="hotleads.html">핫리드</a> 확인 및 <a href="messages.html">메시지 발송</a></li>
+        <li><a href="vendor.html">외주 포탈</a> - 주문 상태 확인, 완료건 처리</li>
+      </ul>
+    </div>
+  </div>
+  <div class="routine-time">
+    <span class="time-label">저녁</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li><a href="events.html">이벤트 로그</a> - 당일 이벤트 검토</li>
+        <li><a href="admin.html">어드민</a> - 다음날 자동화 스케줄 확인</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="routines-weekly" style="scroll-margin-top:80px;">
+<h3>주간 루틴</h3>
+<div class="routine-card">
+  <h4>요일별 업무</h4>
+  <div class="routine-time">
+    <span class="time-label">월</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li>주간 KPI 리뷰 - 전주 대비 변화율 분석</li>
+        <li><a href="leaderboard.html">매체 리더보드</a> 분석 - 매체별 효율 비교</li>
+      </ul>
+    </div>
+  </div>
+  <div class="routine-time">
+    <span class="time-label">수</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li><a href="analytics.html">분석 대시보드</a> - A/B 테스트 결과 검토</li>
+        <li><a href="keywords.html">키워드 분석</a> - 키워드 효율 분석, 카니발리제이션 체크</li>
+      </ul>
+    </div>
+  </div>
+  <div class="routine-time">
+    <span class="time-label">금</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li><a href="customers.html">고객 관리</a> - 이탈 예측 리뷰</li>
+        <li><a href="remarketing.html">리마케팅 큐</a> 점검 - 미전환 건 확인</li>
+        <li><a href="cashflow.html">캐시플로우</a> - 주간 수익 확인</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="routines-monthly" style="scroll-margin-top:80px;">
+<h3>월간 루틴</h3>
+<div class="routine-card">
+  <h4>시기별 업무</h4>
+  <div class="routine-time">
+    <span class="time-label">월초</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li>월간 KPI 정산 - 전월 목표 달성률 확인</li>
+        <li><a href="engine.html">밴딧 엔진</a> - 매체 포트폴리오 재조정</li>
+        <li><a href="season.html">시즌 캘린더</a> - 이번 달 시즌 이벤트 확인 및 업데이트</li>
+      </ul>
+    </div>
+  </div>
+  <div class="routine-time">
+    <span class="time-label">월중</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li><a href="hypotheses.html">가설 관리</a> - 가설 검증 결과 리뷰</li>
+        <li><a href="decay.html">디케이 프로파일</a> - 매체별 반감기 업데이트</li>
+      </ul>
+    </div>
+  </div>
+  <div class="routine-time">
+    <span class="time-label">월말</span>
+    <div class="time-tasks">
+      <ul style="margin:0;padding-left:16px;">
+        <li><a href="payments.html">결제 관리</a> - 결제 현황 점검, 미수금 확인</li>
+        <li><a href="customers.html">고객 관리</a> - 월간 해지율 분석</li>
+        <li>다음 달 운영 계획 수립</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+
+</section>
+
+<!-- ===== Section 6: v10 기능 매핑 ===== -->
+<section class="docs-section" id="v10map">
+<h2>6. v10 기획서 기능 매핑</h2>
+<p>v10 기획서의 각 기능이 어떤 페이지와 DB 테이블로 구현되었는지 매핑합니다.</p>
+
+<div style="background:#fff;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;">
+<div class="v10-row v10-header">
+  <div>기능</div>
+  <div>구현 페이지</div>
+  <div>관련 테이블</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">1. Thompson Sampling 밴딧</div>
+  <div class="v10-page"><a href="engine.html">engine.html</a></div>
+  <div class="v10-table">sm_source_leaderboard</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">2. 디케이 프로파일</div>
+  <div class="v10-page"><a href="decay.html">decay.html</a></div>
+  <div class="v10-table">sm_decay_profile</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">3. 시즌 보상</div>
+  <div class="v10-page"><a href="season.html">season.html</a></div>
+  <div class="v10-table">sm_season_calendar</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">4. 키워드 카니발리제이션</div>
+  <div class="v10-page"><a href="keywords.html">keywords.html</a></div>
+  <div class="v10-table">sm_keyword_cannibalization</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">5. 신뢰도 트리</div>
+  <div class="v10-page"><a href="hypotheses.html">hypotheses.html</a></div>
+  <div class="v10-table">sm_confidence_tree</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">6. 제약조건 엔포서</div>
+  <div class="v10-page"><a href="constraints.html">constraints.html</a></div>
+  <div class="v10-table">sm_constraints, sm_constraint_violations</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">7. 충돌 매트릭스</div>
+  <div class="v10-page"><a href="conflicts.html">conflicts.html</a></div>
+  <div class="v10-table">sm_conflict_matrix</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">8. 매체 전환 효과</div>
+  <div class="v10-page"><a href="transitions.html">transitions.html</a></div>
+  <div class="v10-table">sm_source_transition_effects</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">9. 시스템 헬스 모니터</div>
+  <div class="v10-page"><a href="health.html">health.html</a></div>
+  <div class="v10-table">sm_system_health</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">10. 캐시플로우 분석</div>
+  <div class="v10-page"><a href="cashflow.html">cashflow.html</a></div>
+  <div class="v10-table">sm_cashflow</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">11. 키워드 효율 분석</div>
+  <div class="v10-page"><a href="analytics.html">analytics.html</a></div>
+  <div class="v10-table">sm_keyword_efficiency</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">12. Multi-lag 측정</div>
+  <div class="v10-page"><a href="analytics.html">analytics.html</a></div>
+  <div class="v10-table">sm_lag_measurements</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">13. 복합 효과</div>
+  <div class="v10-page"><a href="analytics.html">analytics.html</a></div>
+  <div class="v10-table">sm_compound_effects</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">14. 롤아웃 단계</div>
+  <div class="v10-page"><a href="engine.html">engine.html</a></div>
+  <div class="v10-table">sm_rollout_phases</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">15. 안티패턴 감지</div>
+  <div class="v10-page"><a href="vendor.html">vendor.html</a></div>
+  <div class="v10-table">sm_anti_pattern_params</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">16. 블로그 인텔</div>
+  <div class="v10-page"><a href="blog-intel.html">blog-intel.html</a></div>
+  <div class="v10-table">sm_blog_snapshots</div>
+</div>
+<div class="v10-row">
+  <div class="v10-feat">17. 고객 세그먼트</div>
+  <div class="v10-page"><a href="customers.html">customers.html</a></div>
+  <div class="v10-table">sm_customer_segments</div>
+</div>
+<div class="v10-row" style="border-bottom:none;">
+  <div class="v10-feat">18. 이탈 예측</div>
+  <div class="v10-page"><a href="customers.html">customers.html</a></div>
+  <div class="v10-table">sm_churn_scores</div>
+</div>
+</div>
+
+</section>
+
+<!-- ===== Section 7: FAQ ===== -->
+<section class="docs-section" id="faq">
+<h2>7. FAQ</h2>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: 고객이 직접 순위를 확인할 수 있나요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 네. <a href="my.html">my.html</a>에서 전화번호로 로그인하면 내 매장의 현재 순위, 순위 변화 추이, 구독 현황, 결제 내역을 직접 확인할 수 있습니다.</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: Thompson Sampling이 뭔가요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 매체 선택 최적화를 위한 베이지안 밴딧 알고리즘입니다. 각 매체의 성공(alpha)/실패(beta)를 베타 분포로 모델링하여, 가장 효과적인 매체를 자동으로 선택합니다. 새로운 매체도 적절한 탐색(exploration)을 통해 기회를 줍니다. <a href="engine.html">engine.html</a>에서 시각화 확인 가능합니다.</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: 결제 실패 시 어떻게 되나요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 4단계 자동 대응이 진행됩니다. ① 즉시 알림 → ② 24시간 후 리마인더 → ③ 48시간 후 2차 리마인더 → ④ 7일 후 자동 해지. 그레이스 피리어드(유예 기간) 동안 서비스는 유지됩니다. <a href="payments.html">payments.html</a>에서 관리합니다.</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: 체험 기간은 얼마인가요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 기본 7일 무료 체험입니다. 체험 기간 중 자동 시퀀스가 발송됩니다: D+1 순위 확인 → D+3 변동 알림 → D+7 분석 리포트 → D+14 경쟁사 비교. 리뷰 3건이 무료로 제공됩니다.</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: 이탈 위험 점수는 어떻게 계산되나요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 6가지 요인의 감점 합산입니다: 로그인 빈도 감소(-20), 읽음률 30% 미만(-15), 미구매(-15), N2 2주 연속 하락(-20), 결제 7일전 비활동(-15), 2개월 미만 가입(-15). 60점 이상이면 at_risk로 전환되고, 복구는 40점 이하일 때(히스테리시스).</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: 안티패턴이 뭔가요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 투입 효과를 떨어뜨리는 비권장 패턴입니다. 예: 주말에 집중 투입, 동일 매체 3일 이상 연속 사용, 전일 대비 200% 이상 급격한 볼륨 변화 등. <a href="vendor.html">vendor.html</a>에서 현황을 확인하고 자동 감지됩니다.</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: 어드민 비밀번호는?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 기본값은 <code>0000</code>입니다. 보안을 위해 반드시 변경하시기 바랍니다. <a href="admin.html">admin.html</a> 접속 시 PIN 입력이 필요합니다.</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: 시즌 이벤트가 순위에 영향을 주나요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 네. 명절, 방학, 연휴 등 시즌에는 검색량과 경쟁이 변합니다. <a href="season.html">season.html</a>에서 시즌 이벤트를 등록하면 impact_factor(보상 계수)가 자동 적용되어 N2 평가 기준이 보정됩니다.</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: N2가 뭔가요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 네이버 플레이스 순위 측정 지표입니다. 특정 키워드로 검색했을 때 해당 매장이 노출되는 위치를 수치화한 것입니다. 숫자가 낮을수록 상위 노출을 의미합니다.</p></div>
+</div>
+
+<div class="docs-faq-item">
+  <button class="docs-faq-q">Q: 카카오 인증은 왜 필요한가요?<span class="docs-faq-icon">+</span></button>
+  <div class="docs-faq-a"><p><strong>A:</strong> 두 가지 목적이 있습니다. ① 고객 본인 확인 - 전화번호와 카카오 계정을 연결하여 신원을 확인합니다. ② 자동 알림 발송 - 카카오 채널을 통해 순위 변동, 리포트, 결제 알림 등 자동 시퀀스를 발송하기 위해 필요합니다.</p></div>
+</div>
+
+</section>
+
+<!-- ===== Section 8: 용어 사전 ===== -->
+<section class="docs-section" id="glossary">
+<h2>8. 용어 사전</h2>
+
+<div class="glossary-item">
+  <div class="glossary-term">N2</div>
+  <div class="glossary-def">네이버 플레이스 순위 지표. 검색 키워드별 매장 노출 순위를 수치화한 것. 숫자가 낮을수록 상위 노출.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">안티패턴</div>
+  <div class="glossary-def">투입 효과를 저하시키는 비권장 패턴. 예: 주말 집중 투입, 매체 편중(동일 매체 연속 사용), 급격한 볼륨 변화.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">Thompson Sampling</div>
+  <div class="glossary-def">베이지안 밴딧 알고리즘. 각 매체의 alpha(성공 횟수)/beta(실패 횟수) 파라미터로 베타 분포를 구성하고, 샘플링을 통해 최적 매체를 선택. 탐색과 활용의 자동 균형.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">디케이 프로파일</div>
+  <div class="glossary-def">투입 효과의 시간에 따른 감쇠 모델. 반감기(half-life)로 측정. 예: 반감기 3일 = 투입 후 3일 지나면 효과가 절반으로 감소.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">카니발리제이션</div>
+  <div class="glossary-def">동일 업종 내 키워드 간 검색 트래픽 잠식 현상. 예: "강남 맛집"과 "강남역 맛집"이 서로의 트래픽을 빼앗는 것.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">교차 효과</div>
+  <div class="glossary-def">한 키워드에 대한 투입이 다른 키워드의 순위에 미치는 영향. 양의 효과(시너지) 또는 음의 효과(간섭)가 있을 수 있음.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">밴딧</div>
+  <div class="glossary-def">Multi-armed bandit 문제. 여러 선택지(매체) 중 최적의 것을 찾기 위해 탐색(exploration, 새로운 매체 시도)과 활용(exploitation, 알려진 좋은 매체 사용)을 균형있게 수행하는 문제.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">EventHub</div>
+  <div class="glossary-def">이벤트 기반 자동화 엔진. 비즈니스 이벤트 발생 시 등록된 연쇄 액션을 자동 트리거. 16개 이상의 이벤트 타입 지원.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">핫리드</div>
+  <div class="glossary-def">전환 가능성이 높은 잠재 고객. 핫리드 점수를 기반으로 우선순위가 매겨지며, 높은 점수의 리드부터 접근.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">리마케팅</div>
+  <div class="glossary-def">이탈하거나 미전환된 고객에 대한 재접근 캠페인. 4단계(stage 1→2→3→4)로 점진적으로 접근 강도를 높임.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">온보딩 부스트</div>
+  <div class="glossary-def">신규 가입 첫 7일간 강화 투입 프로그램. 일일 180-200 타수 + 리뷰 3건으로 빠른 순위 상승을 유도하여 조기 성공 경험 제공.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">이탈 히스테리시스</div>
+  <div class="glossary-def">이탈 판정의 안정성을 위한 메커니즘. 이탈 진입 임계값(60점)과 복구 임계값(40점)을 다르게 설정하여, 경계선 고객의 상태가 빈번히 바뀌는 것(chattering)을 방지.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">시즌 보상</div>
+  <div class="glossary-def">시즌 변수(명절, 방학, 연휴 등)로 인한 N2 변동을 보정하는 계수(impact_factor). 시즌에는 검색량이 변하므로 평상시 기준으로 평가하면 왜곡이 발생.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">복합 효과</div>
+  <div class="glossary-def">여러 투입(매체, 리뷰, 키워드)의 시너지 또는 간섭 효과. 단순 합산이 아닌 비선형적 상호작용.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">롤아웃</div>
+  <div class="glossary-def">신규 기능이나 정책을 전체 고객에 한번에 적용하지 않고 단계적(5%→20%→50%→100%)으로 적용하는 과정. 위험 관리 목적.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">파이프라인</div>
+  <div class="glossary-def">고객 상태 흐름 경로. lead → trial → onboarding → active → at_risk → churned → winback. 각 단계 전환 시 EventHub 이벤트 발생.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">그레이스 피리어드</div>
+  <div class="glossary-def">결제 실패 후에도 서비스를 유지하는 유예 기간. 이 기간 동안 고객에게 결제 재시도를 요청하며, 기간 만료 시 자동 해지.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">매체</div>
+  <div class="glossary-def">트래픽 투입에 사용하는 외부 서비스 소스. 각 매체는 Thompson Sampling으로 효과가 평가되며, 리더보드에서 순위가 매겨짐.</div>
+</div>
+<div class="glossary-item">
+  <div class="glossary-term">타수</div>
+  <div class="glossary-def">트래픽 투입 단위 (건/일). 예: "3,000타" = 하루 3,000건의 트래픽 투입. 패키지별로 제공되는 타수가 다름.</div>
+</div>
+
+</section>
+
+</main>
+</div>
+
+<!-- Footer -->
+<footer class="footer" style="margin-left:260px;">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo">ONDA</div>
+        <p>AI 기반 네이버 플레이스 순위 관리 서비스</p>
+      </div>
+      <div class="footer-links">
+        <div>
+          <a href="index.html">홈</a>
+          <a href="pricing.html">가격표</a>
+          <a href="admin.html">어드민</a>
+        </div>
+        <div>
+          <a href="mailto:contact@onda.kr">contact@onda.kr</a>
+          <a href="http://pf.kakao.com/_xdbJnn/chat">카카오채널</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 ONDA Marketing. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+(function() {
+  // Sidebar toggle (mobile)
+  const sidebar = document.getElementById('docsSidebar');
+  const toggleBtn = document.getElementById('sidebarToggle');
+
+  if (toggleBtn && sidebar) {
+    toggleBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('open');
+      toggleBtn.textContent = sidebar.classList.contains('open') ? '\u2715' : '\u2630';
+    });
+  }
+
+  // Close sidebar on link click (mobile)
+  sidebar.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+        toggleBtn.textContent = '\u2630';
+      }
+    });
+  });
+
+  // Active link on scroll
+  const sections = document.querySelectorAll('.docs-section, [id][style*="scroll-margin"]');
+  const navLinks = document.querySelectorAll('.docs-nav a');
+
+  function updateActiveLink() {
+    var scrollPos = window.scrollY + 120;
+    var current = '';
+    sections.forEach(function(section) {
+      if (section.id && section.offsetTop <= scrollPos) {
+        current = section.id;
+      }
+    });
+    // Also check sub-sections
+    document.querySelectorAll('[id][style*="scroll-margin-top"]').forEach(function(el) {
+      if (el.id && el.offsetTop <= scrollPos) {
+        current = el.id;
+      }
+    });
+    navLinks.forEach(function(link) {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  }
+  window.addEventListener('scroll', updateActiveLink);
+  updateActiveLink();
+
+  // Search
+  var searchInput = document.getElementById('docsSearch');
+  var allSections = document.querySelectorAll('.docs-section');
+
+  searchInput.addEventListener('input', function() {
+    var query = this.value.trim().toLowerCase();
+    if (!query) {
+      allSections.forEach(function(s) { s.style.display = ''; });
+      return;
+    }
+    allSections.forEach(function(s) {
+      var text = s.textContent.toLowerCase();
+      s.style.display = text.indexOf(query) !== -1 ? '' : 'none';
+    });
+  });
+
+  // FAQ accordion
+  document.querySelectorAll('.docs-faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = btn.parentElement;
+      var wasActive = item.classList.contains('active');
+      document.querySelectorAll('.docs-faq-item').forEach(function(i) { i.classList.remove('active'); });
+      if (!wasActive) item.classList.add('active');
+    });
+  });
+
+  // Footer responsive: adjust margin on mobile
+  function adjustFooter() {
+    var footer = document.querySelector('.footer');
+    if (footer) {
+      footer.style.marginLeft = window.innerWidth <= 768 ? '0' : '260px';
+    }
+  }
+  window.addEventListener('resize', adjustFooter);
+  adjustFooter();
+})();
+</script>
+</body>
+</html>
