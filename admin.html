@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONDA Admin</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.admin-grid { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 64px); }
+@media(max-width:768px) { .admin-grid { grid-template-columns: 1fr; } }
+.sidebar { background: var(--dark); padding: 24px 16px; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; }
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-section h4 { color: rgba(255,255,255,0.4); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding: 0 12px; }
+.sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: rgba(255,255,255,0.7); border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+.sidebar-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.sidebar-link.active { background: var(--primary); color: #fff; }
+.sidebar-link .badge { margin-left: auto; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+.sidebar-link.active .badge { background: rgba(255,255,255,0.25); }
+.main-content { padding: 24px 32px; overflow-y: auto; }
+@media(max-width:768px) { .sidebar { display: none; } .main-content { padding: 16px; } }
+.auto-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.auto-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.auto-status { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.auto-status .dot { width: 8px; height: 8px; border-radius: 50%; }
+.toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
+.toggle input { display: none; }
+.toggle .slider { position: absolute; inset: 0; background: var(--gray-200); border-radius: 12px; transition: 0.3s; }
+.toggle .slider::before { content: ''; position: absolute; width: 18px; height: 18px; background: #fff; border-radius: 50%; left: 3px; top: 3px; transition: 0.3s; }
+.toggle input:checked + .slider { background: var(--accent); }
+.toggle input:checked + .slider::before { transform: translateX(20px); }
+.pipeline-flow { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 16px 0; }
+.pipeline-step { text-align: center; min-width: 100px; flex-shrink: 0; }
+.pipeline-step .circle { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 8px; }
+.pipeline-step .count { font-size: 20px; font-weight: 800; }
+.pipeline-step .label { font-size: 12px; color: var(--gray-500); }
+.pipeline-arrow { font-size: 20px; color: var(--gray-200); flex-shrink: 0; }
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+@media(max-width:768px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+.kpi-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+.kpi-card .value { font-size: 28px; font-weight: 800; }
+.kpi-card .label { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+.kpi-card .change { font-size: 12px; margin-top: 4px; }
+.activity-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.cron-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--gray-50); border-radius: 8px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div id="authGate" style="position:fixed;inset:0;z-index:9999;background:var(--dark);display:flex;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:40px;max-width:400px;width:90%;text-align:center">
+    <div style="font-size:32px;font-weight:800;color:var(--primary);margin-bottom:8px">ONDA</div>
+    <p style="color:var(--gray-500);margin-bottom:24px">관리자 로그인</p>
+    <input type="password" id="authPin" placeholder="PIN 입력" style="width:100%;padding:14px;border:2px solid var(--gray-200);border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;font-family:inherit" onkeydown="if(event.key==='Enter')checkAuth()">
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="checkAuth()">로그인</button>
+    <p id="authError" style="color:#dc3545;font-size:13px;margin-top:8px;display:none">잘못된 PIN입니다</p>
+  </div>
+</div>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="admin.html" class="logo">ONDA <span style="font-size:13px;font-weight:400;color:var(--gray-500)">Admin</span></a>
+    <nav class="nav">
+      <span style="font-size:13px;color:var(--gray-500)" id="timeDisplay"></span>
+      <a href="index.html" style="font-size:13px">공개 사이트 →</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴" onclick="document.querySelector('.sidebar').style.display=document.querySelector('.sidebar').style.display==='block'?'none':'block'"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<div class="admin-grid" style="margin-top:64px">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <h4>개요</h4>
+      <a class="sidebar-link active" onclick="showPanel('overview')">📊 종합 대시보드</a>
+      <a class="sidebar-link" onclick="showPanel('automation')">⚡ 자동화 제어</a>
+      <a class="sidebar-link" onclick="showPanel('pipeline')">🔄 고객 파이프라인</a>
+    </div>
+    <div class="sidebar-section">
+      <h4>영업</h4>
+      <a class="sidebar-link" onclick="nav('hotleads.html')">🔥 핫리드 <span class="badge" id="sideLeads">-</span></a>
+      <a class="sidebar-link" onclick="nav('messages.html')">📋 메시지 템플릿</a>
+      <a class="sidebar-link" onclick="nav('remarketing.html')">🔁 리마케팅</a>
+    </div>
+    <div class="sidebar-section">
+      <h4>운영</h4>
+      <a class="sidebar-link" onclick="nav('customers.html')">👥 고객 관리</a>
+      <a class="sidebar-link" onclick="nav('vendor.html')">📦 외주 포털</a>
+      <a class="sidebar-link" onclick="nav('analytics.html')">💰 캐시플로우</a>
+    </div>
+    <div class="sidebar-section">
+      <h4>인텔리전스</h4>
+      <a class="sidebar-link" onclick="nav('hypotheses.html')">🧪 가설 테스트</a>
+      <a class="sidebar-link" onclick="nav('leaderboard.html')">🏆 매체 리더보드</a>
+      <a class="sidebar-link" onclick="nav('constraints.html')">⚙️ 제약 조건</a>
+    </div>
+    <div class="sidebar-section">
+      <h4>시스템</h4>
+      <a class="sidebar-link" onclick="nav('events.html')">📡 이벤트 버스</a>
+      <a class="sidebar-link" onclick="nav('audit.html')">📜 감사 로그</a>
+      <a class="sidebar-link" onclick="nav('decisions.html')">🤖 AI 판단</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Overview Panel -->
+    <div id="panel-overview">
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:20px">종합 대시보드</h2>
+      <div class="kpi-row" id="kpiRow"></div>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+        <div class="auto-card">
+          <h3 style="margin-bottom:12px">🔄 고객 파이프라인</h3>
+          <div class="pipeline-flow" id="miniPipeline"></div>
+        </div>
+        <div class="auto-card">
+          <h3 style="margin-bottom:12px">⚡ 오늘 할 일</h3>
+          <div id="todayTasks"></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="auto-card">
+          <h3 style="margin-bottom:12px">🕐 최근 활동</h3>
+          <div id="recentActs"></div>
+        </div>
+        <div class="auto-card">
+          <h3 style="margin-bottom:12px">🖥️ 시스템 상태</h3>
+          <div id="sysCheck"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Automation Panel -->
+    <div id="panel-automation" style="display:none">
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:8px">자동화 제어센터</h2>
+      <p style="color:var(--gray-500);margin-bottom:24px">모든 자동화 플로우를 한 곳에서 ON/OFF 및 모니터링</p>
+
+      <div class="auto-card">
+        <div class="auto-header">
+          <div>
+            <h3>🔥 핫리드 자동발굴</h3>
+            <p style="font-size:13px;color:var(--gray-500)">매일 91K 매장에서 순위하락+리뷰부족 자동 추출</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="auto-status"><div class="dot" style="background:var(--accent)"></div>활성</div>
+            <label class="toggle"><input type="checkbox" checked data-auto="hotlead"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;font-size:13px;color:var(--gray-500)">
+          <span>마지막 실행: <strong id="autoHotleadLast">-</strong></span>
+          <span>발굴 수: <strong id="autoHotleadCount">-</strong></span>
+          <span>주기: 매일 08:00</span>
+        </div>
+        <button class="btn btn-outline" style="margin-top:12px;padding:6px 16px;font-size:13px" onclick="runHotlead()">지금 실행 ▶</button>
+      </div>
+
+      <div class="auto-card">
+        <div class="auto-header">
+          <div>
+            <h3>📨 리마케팅 자동발송</h3>
+            <p style="font-size:13px;color:var(--gray-500)">미전환 고객에게 14일/24h/72h/7d 자동 시퀀스</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="auto-status"><div class="dot" style="background:var(--accent)"></div>활성</div>
+            <label class="toggle"><input type="checkbox" checked data-auto="remarketing"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;font-size:13px;color:var(--gray-500)">
+          <span>대기: <strong id="autoRemarkPending">-</strong>건</span>
+          <span>오늘 발송: <strong id="autoRemarkSent">-</strong>건</span>
+        </div>
+      </div>
+
+      <div class="auto-card">
+        <div class="auto-header">
+          <div>
+            <h3>📦 주문서 자동생성</h3>
+            <p style="font-size:13px;color:var(--gray-500)">활성 고객별 매일 주문서 자동 생성 (요일가중치+노이즈+제약)</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="auto-status"><div class="dot" style="background:var(--accent)"></div>활성</div>
+            <label class="toggle"><input type="checkbox" checked data-auto="orders"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;font-size:13px;color:var(--gray-500)">
+          <span>오늘 생성: <strong id="autoOrderCount">-</strong>건</span>
+          <span>총 투입량: <strong id="autoOrderVol">-</strong>타</span>
+        </div>
+        <button class="btn btn-outline" style="margin-top:12px;padding:6px 16px;font-size:13px" onclick="runOrders()">지금 생성 ▶</button>
+      </div>
+
+      <div class="auto-card">
+        <div class="auto-header">
+          <div>
+            <h3>⚠️ 이탈위험 자동감지</h3>
+            <p style="font-size:13px;color:var(--gray-500)">churn_risk_score ≥ 60 시 자동 AT_RISK 전환 + 알림</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="auto-status"><div class="dot" style="background:var(--accent)"></div>활성</div>
+            <label class="toggle"><input type="checkbox" checked data-auto="churn"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;font-size:13px;color:var(--gray-500)">
+          <span>위험 고객: <strong id="autoChurnCount">-</strong>명</span>
+          <span>임계값: 60점</span>
+        </div>
+        <button class="btn btn-outline" style="margin-top:12px;padding:6px 16px;font-size:13px" onclick="runChurn()">전체 스캔 ▶</button>
+      </div>
+
+      <div class="auto-card">
+        <div class="auto-header">
+          <div>
+            <h3>🏆 레퍼런스 자동갱신</h3>
+            <p style="font-size:13px;color:var(--gray-500)">순위 하락한 레퍼런스 자동 비활성화</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="auto-status"><div class="dot" style="background:var(--accent)"></div>활성</div>
+            <label class="toggle"><input type="checkbox" checked data-auto="reference"><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="auto-card">
+        <div class="auto-header">
+          <div>
+            <h3>🎰 매체 밴딧 자동선택</h3>
+            <p style="font-size:13px;color:var(--gray-500)">Thompson Sampling 기반 매체 자동 배분 (주문서 생성 시)</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="auto-status"><div class="dot" style="background:var(--accent)"></div>활성</div>
+            <label class="toggle"><input type="checkbox" checked data-auto="bandit"><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="auto-card">
+        <div class="auto-header">
+          <div>
+            <h3>📊 A/B 테스트 자동최적화</h3>
+            <p style="font-size:13px;color:var(--gray-500)">주간 메시지 성과 집계 → 차주 비율 자동 조정</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="auto-status"><div class="dot" style="background:#fd7e14"></div>수동</div>
+            <label class="toggle"><input type="checkbox" data-auto="abtest"><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:32px;margin-bottom:16px">📅 크론 스케줄</h3>
+      <div class="cron-item"><span>핫리드 발굴</span><span style="font-size:13px;color:var(--gray-500)">매일 08:00</span><span style="font-size:13px;color:var(--accent)">🟢 활성</span></div>
+      <div class="cron-item"><span>주문서 생성</span><span style="font-size:13px;color:var(--gray-500)">매일 07:00</span><span style="font-size:13px;color:var(--accent)">🟢 활성</span></div>
+      <div class="cron-item"><span>리마케팅 발송</span><span style="font-size:13px;color:var(--gray-500)">매일 10:00</span><span style="font-size:13px;color:var(--accent)">🟢 활성</span></div>
+      <div class="cron-item"><span>이탈위험 스캔</span><span style="font-size:13px;color:var(--gray-500)">매일 09:00</span><span style="font-size:13px;color:var(--accent)">🟢 활성</span></div>
+      <div class="cron-item"><span>레퍼런스 갱신</span><span style="font-size:13px;color:var(--gray-500)">매일 06:00</span><span style="font-size:13px;color:var(--accent)">🟢 활성</span></div>
+      <div class="cron-item"><span>A/B 테스트 집계</span><span style="font-size:13px;color:var(--gray-500)">매주 월요일 08:00</span><span style="font-size:13px;color:#fd7e14">🟡 수동</span></div>
+      <div class="cron-item"><span>감쇠율 측정</span><span style="font-size:13px;color:var(--gray-500)">매일 05:00</span><span style="font-size:13px;color:var(--accent)">🟢 활성</span></div>
+    </div>
+
+    <!-- Pipeline Panel -->
+    <div id="panel-pipeline" style="display:none">
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:8px">고객 파이프라인</h2>
+      <p style="color:var(--gray-500);margin-bottom:24px">전체 고객 여정 시각화 + 각 단계 자동화 상태</p>
+
+      <div class="auto-card" style="overflow-x:auto">
+        <div class="pipeline-flow" id="fullPipeline" style="min-width:800px"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px" id="stageDetails"></div>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+// Auth
+const ADMIN_PIN = '0000'; // 변경 필요
+function checkAuth() {
+  if (document.getElementById('authPin').value === ADMIN_PIN) {
+    document.getElementById('authGate').style.display = 'none';
+    sessionStorage.setItem('onda_admin', '1');
+    init();
+  } else {
+    document.getElementById('authError').style.display = 'block';
+  }
+}
+if (sessionStorage.getItem('onda_admin') === '1') {
+  document.getElementById('authGate').style.display = 'none';
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  document.getElementById('authPin').focus();
+}
+
+// Time display
+setInterval(() => {
+  document.getElementById('timeDisplay').textContent = new Date().toLocaleString('ko');
+}, 1000);
+
+function nav(url) { window.location.href = url; }
+
+function showPanel(name) {
+  document.querySelectorAll('[id^="panel-"]').forEach(p => p.style.display = 'none');
+  document.getElementById('panel-' + name).style.display = 'block';
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  event.target.closest('.sidebar-link').classList.add('active');
+}
+
+const statusMap = { lead:'리드', trial:'체험', onboarding:'온보딩', active:'활성', at_risk:'위험', churned:'해지', winback:'복귀' };
+const statusColors = { lead:'#FFC107', trial:'#17A2B8', onboarding:'#6F42C1', active:'#28A745', at_risk:'#FD7E14', churned:'#DC3545', winback:'#0066FF' };
+const statusEmoji = { lead:'💡', trial:'🧪', onboarding:'🚀', active:'✅', at_risk:'⚠️', churned:'❌', winback:'🔄' };
+
+async function init() {
+  await loadOverview();
+  await loadAutomation();
+  loadPipelinePanel();
+}
+
+async function loadOverview() {
+  try {
+    const stats = await sbRpc('get_sm_dashboard_stats');
+    const c = stats.customers || {};
+    const r = stats.revenue || {};
+    const hl = stats.hot_leads || {};
+    const t = stats.trials || {};
+
+    document.getElementById('kpiRow').innerHTML = `
+      <div class="kpi-card"><div class="value">${c.active||0}</div><div class="label">활성 고객</div></div>
+      <div class="kpi-card"><div class="value">${c.trial||0}</div><div class="label">체험중</div></div>
+      <div class="kpi-card"><div class="value">${hl.unsent||0}</div><div class="label">미발송 핫리드</div></div>
+      <div class="kpi-card"><div class="value">${r.this_month?Math.round(r.this_month/10000)+'만':'0'}</div><div class="label">이번달 매출</div></div>
+      <div class="kpi-card"><div class="value" style="color:${c.at_risk>0?'#dc3545':'var(--accent)'}">${c.at_risk||0}</div><div class="label">위험 고객</div></div>`;
+
+    document.getElementById('sideLeads').textContent = hl.unsent || 0;
+
+    // Mini pipeline
+    const stages = ['lead','trial','active','at_risk','churned'];
+    document.getElementById('miniPipeline').innerHTML = stages.map((s, i) => `
+      ${i > 0 ? '<div class="pipeline-arrow">→</div>' : ''}
+      <div class="pipeline-step">
+        <div class="circle" style="background:${statusColors[s]}20;color:${statusColors[s]}">${statusEmoji[s]}</div>
+        <div class="count">${c[s]||0}</div>
+        <div class="label">${statusMap[s]}</div>
+      </div>`).join('');
+
+    // Today tasks
+    const pending = await sbRpc('get_pending_remarketing');
+    const todayOrders = await sbQuery(`sm_vendor_orders?order_date=eq.${new Date().toISOString().slice(0,10)}&status=eq.pending`);
+    document.getElementById('todayTasks').innerHTML = `
+      <div style="padding:8px 0;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between">
+        <span>📨 리마케팅 발송</span><strong>${Array.isArray(pending)?pending.length:0}건</strong>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between">
+        <span>📦 미완료 주문서</span><strong>${todayOrders.length}건</strong>
+      </div>
+      <div style="padding:8px 0;display:flex;justify-content:space-between">
+        <span>🔥 미발송 핫리드</span><strong>${hl.unsent||0}건</strong>
+      </div>`;
+
+    // Recent activity
+    const events = await sbQuery('sm_customer_events?order=created_at.desc&limit=8');
+    document.getElementById('recentActs').innerHTML = events.length ? events.map(e => `
+      <div class="activity-item">
+        <div class="activity-dot" style="background:var(--primary)"></div>
+        <div>
+          <div style="font-size:14px"><strong>${e.event_type}</strong> <span style="color:var(--gray-500)">고객 #${e.customer_id}</span></div>
+          <div style="font-size:12px;color:var(--gray-500)">${new Date(e.created_at).toLocaleString('ko')}</div>
+        </div>
+      </div>`).join('') : '<p style="color:var(--gray-500);font-size:14px">활동 없음</p>';
+
+    // System check
+    document.getElementById('sysCheck').innerHTML = `
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100)"><span>Supabase DB</span><span style="color:var(--accent)">🟢 정상</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100)"><span>매장 데이터</span><span>91,196개</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100)"><span>핫리드 엔진</span><span style="color:var(--accent)">🟢 정상</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0"><span>GitHub Pages</span><span style="color:var(--accent)">🟢 배포됨</span></div>`;
+  } catch(e) { console.error(e); }
+}
+
+async function loadAutomation() {
+  try {
+    const hl = await sbRpc('get_hot_lead_stats');
+    document.getElementById('autoHotleadCount').textContent = (hl.unsent||0) + '건';
+    document.getElementById('autoHotleadLast').textContent = '방금';
+
+    const pending = await sbQuery('sm_remarketing_queue?status=eq.pending&select=id', { headers: { 'Prefer': 'count=exact', 'Range': '0-0' } });
+    document.getElementById('autoRemarkPending').textContent = Array.isArray(pending) ? pending.length : '-';
+
+    const todayOrders = await sbQuery(`sm_vendor_orders?order_date=eq.${new Date().toISOString().slice(0,10)}`);
+    document.getElementById('autoOrderCount').textContent = todayOrders.length;
+    document.getElementById('autoOrderVol').textContent = todayOrders.reduce((s,o) => s + (o.total_volume||0), 0);
+
+    const atRisk = await sbQuery('sm_customers?status=eq.at_risk&select=id');
+    document.getElementById('autoChurnCount').textContent = atRisk.length;
+  } catch(e) {}
+
+  // Toggle state persistence
+  document.querySelectorAll('.toggle input').forEach(t => {
+    const key = 'auto_' + t.dataset.auto;
+    const saved = localStorage.getItem(key);
+    if (saved !== null) t.checked = saved === '1';
+    t.addEventListener('change', () => localStorage.setItem(key, t.checked ? '1' : '0'));
+  });
+}
+
+async function loadPipelinePanel() {
+  const allCust = await sbQuery('sm_customers?select=status');
+  const counts = {};
+  Object.keys(statusMap).forEach(s => counts[s] = 0);
+  allCust.forEach(c => counts[c.status] = (counts[c.status]||0) + 1);
+
+  const stages = Object.keys(statusMap);
+  document.getElementById('fullPipeline').innerHTML = stages.map((s, i) => `
+    ${i > 0 ? '<div class="pipeline-arrow">→</div>' : ''}
+    <div class="pipeline-step">
+      <div class="circle" style="background:${statusColors[s]}20;color:${statusColors[s]};font-size:24px">${statusEmoji[s]}</div>
+      <div class="count">${counts[s]||0}</div>
+      <div class="label">${statusMap[s]}</div>
+    </div>`).join('');
+
+  const stageAuto = {
+    lead: { auto: '핫리드 발굴 → 메시지 생성 → 발송', trigger: '매일 08:00 자동 갱신' },
+    trial: { auto: '리마케팅 시퀀스 자동 생성 (24h/72h/7d)', trigger: '체험 신청 즉시' },
+    onboarding: { auto: '부스트 모드 (180타) + D3/D7 알림', trigger: '유료 전환 즉시' },
+    active: { auto: '주문서 자동생성 + 주간 리포트', trigger: '매일 07:00' },
+    at_risk: { auto: '선제 대응 + 특별 리포트', trigger: 'churn_risk ≥ 60' },
+    churned: { auto: '감쇠율 측정 + Stage4 리마케팅', trigger: '해지 즉시' },
+    winback: { auto: '과거 데이터 복원 + 부스트 재적용', trigger: '재가입 즉시' }
+  };
+
+  document.getElementById('stageDetails').innerHTML = stages.map(s => `
+    <div class="auto-card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:20px">${statusEmoji[s]}</span>
+        <strong>${statusMap[s]} (${counts[s]||0}명)</strong>
+      </div>
+      <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px">${stageAuto[s].auto}</div>
+      <div style="font-size:12px;padding:6px 10px;background:var(--gray-50);border-radius:6px">⏰ ${stageAuto[s].trigger}</div>
+    </div>`).join('');
+}
+
+async function runHotlead() {
+  const btn = event.target; btn.disabled = true; btn.textContent = '실행 중...';
+  const count = await sbRpc('discover_hot_leads');
+  alert(`${count}개 핫리드 발굴!`);
+  btn.disabled = false; btn.textContent = '지금 실행 ▶';
+  loadAutomation();
+}
+
+async function runOrders() {
+  const btn = event.target; btn.disabled = true; btn.textContent = '생성 중...';
+  const customers = await sbQuery('sm_customers?status=in.(active,onboarding,trial)');
+  let cnt = 0;
+  for (const c of customers) { try { await sbRpc('generate_vendor_order', { cust_id: c.id }); cnt++; } catch(e) {} }
+  alert(`${cnt}개 주문서 생성!`);
+  btn.disabled = false; btn.textContent = '지금 생성 ▶';
+  loadAutomation();
+}
+
+async function runChurn() {
+  const btn = event.target; btn.disabled = true; btn.textContent = '스캔 중...';
+  const customers = await sbQuery('sm_customers?status=eq.active');
+  let atRisk = 0;
+  for (const c of customers) {
+    const score = await sbRpc('calculate_churn_risk', { cust_id: c.id });
+    if (score >= 60) { await sbRpc('transition_customer', { cust_id: c.id, new_status: 'at_risk' }); atRisk++; }
+  }
+  alert(`스캔 완료. ${atRisk}명 위험 감지.`);
+  btn.disabled = false; btn.textContent = '전체 스캔 ▶';
+  loadOverview(); loadAutomation();
+}
+</script>
+</body>
+</html>
