@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>톡톡 메시지 템플릿 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="pricing.html">가격표</a>
+      <a href="trial.html" class="nav-cta">무료체험</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="pricing.html">가격표</a><a href="trial.html">무료체험</a>
+    <a href="messages.html">메시지 템플릿</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:120px">
+  <div class="container" style="max-width:700px">
+    <h2 class="section-title">톡톡 메시지 템플릿</h2>
+    <p class="section-sub">복사해서 바로 사용하세요 • {{LINK}}는 자동 치환됩니다</p>
+
+    <div class="form-group" style="margin-bottom:32px">
+      <label>랜딩페이지 링크 설정</label>
+      <input type="url" id="linkInput" placeholder="https://didai64595021-ui.github.io/onda-selfmarketing/trial.html" value="https://didai64595021-ui.github.io/onda-selfmarketing/trial.html">
+    </div>
+
+    <div class="msg-card">
+      <h3>A타입 — 순위 데이터형 (핫리드용)</h3>
+      <p class="msg-desc">순위 하락 중인 매장에게 발송. 전환율 가장 높음.</p>
+      <pre class="msg-text">사장님 안녕하세요 😊
+혹시 최근 네이버 플레이스 순위가 떨어진 거 느끼셨나요?
+
+저희가 91,000개 매장 데이터를 분석하고 있는데,
+사장님 매장이 최근 순위 하락 추세에 있어서 연락드렸습니다.
+
+지금 리뷰 3건 무료로 넣어드리고 있는데,
+사진 포함 고품질 리뷰입니다.
+
+관심 있으시면 여기서 확인해보세요 👇
+{{LINK}}</pre>
+      <button class="btn-copy" onclick="copyMsg(this)">📋 복사하기</button>
+    </div>
+
+    <div class="msg-card">
+      <h3>B타입 — 경쟁 변동형</h3>
+      <p class="msg-desc">경쟁 매장이 순위 관리를 시작한 지역에 발송.</p>
+      <pre class="msg-text">사장님 안녕하세요!
+같은 지역 비슷한 매장들이 최근 순위 관리를 시작한 것 같아요.
+
+AI로 매일 순위를 체크하고,
+최적의 타이밍에 자연스러운 트래픽을 넣어서 순위를 올려드려요.
+
+지금 리뷰 3건 무료 체험 가능합니다 📱
+{{LINK}}</pre>
+      <button class="btn-copy" onclick="copyMsg(this)">📋 복사하기</button>
+    </div>
+
+    <div class="msg-card">
+      <h3>C타입 — 시즌형</h3>
+      <p class="msg-desc">성수기/시즌에 맞춰 발송. 긴급성 활용.</p>
+      <pre class="msg-text">사장님 안녕하세요 🌸
+요즘 시즌 맞아서 검색량이 올라가고 있는데,
+지금 순위 올려놓으면 효과가 2배입니다!
+
+리뷰 3건 무료로 테스트해보시겠어요?
+사진 포함 고품질 리뷰예요 ✨
+{{LINK}}</pre>
+      <button class="btn-copy" onclick="copyMsg(this)">📋 복사하기</button>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand"><div class="logo">ONDA</div><p>AI 기반 네이버 플레이스 순위 관리 서비스</p></div>
+      <div class="footer-links">
+        <div><a href="index.html">홈</a><a href="pricing.html">가격표</a><a href="trial.html">무료체험</a></div>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+<script>
+function copyMsg(btn) {
+  const pre = btn.previousElementSibling;
+  const link = document.getElementById('linkInput').value || '{{LINK}}';
+  const text = pre.textContent.replace(/\{\{LINK\}\}/g, link);
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ 복사완료!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 복사하기'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
