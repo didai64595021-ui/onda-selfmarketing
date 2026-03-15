@@ -269,9 +269,13 @@ async function handleLogin(e) {
   btn.disabled = true;
   btn.textContent = '확인 중...';
 
-  const phone = document.getElementById('phoneInput').value.trim();
+  const rawPhone = document.getElementById('phoneInput').value.trim();
+  // 하이픈 있든 없든 매칭: 숫자만 추출 후 양쪽 형식으로 검색
+  const digits = rawPhone.replace(/[^0-9]/g, '');
+  const withDash = digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  const noDash = digits;
   try {
-    const data = await sbQuery('sm_customers?contact=eq.' + encodeURIComponent(phone) + '&select=*');
+    let data = await sbQuery('sm_customers?or=(contact.eq.' + encodeURIComponent(withDash) + ',contact.eq.' + encodeURIComponent(noDash) + ')&select=*');
     if (data && data.length > 0) {
       sessionStorage.setItem('onda_my_customer_id', data[0].id);
       currentCustomer = data[0];
