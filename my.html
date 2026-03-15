@@ -271,7 +271,7 @@ async function handleLogin(e) {
 
   const phone = document.getElementById('phoneInput').value.trim();
   try {
-    const data = await sbQuery('sm_customers?phone=eq.' + encodeURIComponent(phone) + '&select=*');
+    const data = await sbQuery('sm_customers?contact=eq.' + encodeURIComponent(phone) + '&select=*');
     if (data && data.length > 0) {
       sessionStorage.setItem('onda_my_customer_id', data[0].id);
       currentCustomer = data[0];
@@ -486,8 +486,8 @@ async function loadTrialSection(customer) {
       return '<div class="trial-step">' +
         '<div class="trial-dot ' + ts.cls + '">D+' + step.day_offset + '</div>' +
         '<div style="flex:1">' +
-          '<div style="font-weight:600;font-size:14px">' + (step.title || step.message_type || 'D+' + step.day_offset + ' 메시지') + '</div>' +
-          '<div style="font-size:12px;color:var(--gray-500)">' + (step.description || '') + '</div>' +
+          '<div style="font-weight:600;font-size:14px">' + (step.title || step.action_type || 'D+' + step.day_offset + ' 메시지') + '</div>' +
+          '<div style="font-size:12px;color:var(--gray-500)">' + (step.message || step.description || '') + '</div>' +
         '</div>' +
         '<span class="status-badge" style="background:' + getTrialStatusBg(step.status) + ';color:' + getTrialStatusColor(step.status) + ';font-size:11px">' + ts.label + '</span>' +
         '</div>';
@@ -528,7 +528,7 @@ async function handleMemo(e) {
   btn.textContent = '전송 중...';
 
   try {
-    await sbInsert('sm_customer_notes', {
+    await sbInsert('customer_notes', {
       customer_id: currentCustomer.id,
       note: textarea.value.trim(),
       created_at: new Date().toISOString()
