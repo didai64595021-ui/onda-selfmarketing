@@ -7,47 +7,145 @@
   <div class="container">
     <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">🤝 레퍼럴 프로그램</h2>
     <p style="color:var(--gray-500);margin-bottom:24px">추천인: 다음달 30% 할인 | 피추천인: 첫달 50% 할인 + 무료체험 2주</p>
+
+    <div class="dash-stats" id="refStats" style="margin-bottom:24px"></div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-      <div class="auto-card" style="text-align:center"><div style="font-size:48px">🎁</div><h3>추천인 혜택</h3><div style="font-size:32px;font-weight:800;color:var(--accent);margin:8px 0">30%</div><p style="color:var(--gray-500);font-size:14px">다음 달 구독료 할인</p></div>
-      <div class="auto-card" style="text-align:center"><div style="font-size:48px">🌟</div><h3>피추천인 혜택</h3><div style="font-size:32px;font-weight:800;color:var(--primary);margin:8px 0">50%</div><p style="color:var(--gray-500);font-size:14px">첫 달 할인 + 무료체험 2주</p></div>
+      <div class="auto-card" style="text-align:center">
+        <div style="font-size:48px">🎁</div>
+        <h3 style="margin:8px 0">추천인 혜택</h3>
+        <div style="font-size:36px;font-weight:800;color:var(--accent)">30%</div>
+        <p style="color:var(--gray-500);font-size:14px;margin-top:4px">다음 달 구독료 할인</p>
+        <div style="margin-top:12px;padding:12px;background:var(--gray-50);border-radius:8px;font-size:13px">
+          예) 그로스 8만원 → <strong>5.6만원</strong>
+        </div>
+      </div>
+      <div class="auto-card" style="text-align:center">
+        <div style="font-size:48px">🌟</div>
+        <h3 style="margin:8px 0">피추천인 혜택</h3>
+        <div style="font-size:36px;font-weight:800;color:var(--primary)">50%</div>
+        <p style="color:var(--gray-500);font-size:14px;margin-top:4px">첫 달 할인 + 무료체험 2주</p>
+        <div style="margin-top:12px;padding:12px;background:var(--gray-50);border-radius:8px;font-size:13px">
+          예) 스타터 4만원 → <strong>2만원</strong> (첫 달)
+        </div>
+      </div>
     </div>
-    <div class="auto-card">
+
+    <div class="auto-card" style="margin-bottom:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h3>레퍼럴 현황</h3>
+        <h3>📋 레퍼럴 현황</h3>
         <button class="btn btn-primary" style="padding:8px 16px;font-size:14px" onclick="generateCode()">+ 추천 코드 생성</button>
       </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="filter-tab active" onclick="filterRef('all',this)">전체</button>
+        <button class="filter-tab" onclick="filterRef('active',this)">활성</button>
+        <button class="filter-tab" onclick="filterRef('converted',this)">전환됨</button>
+        <button class="filter-tab" onclick="filterRef('expired',this)">만료</button>
+      </div>
+
       <div style="overflow-x:auto">
         <table class="dash-table">
-          <thead><tr><th>코드</th><th>추천인</th><th>피추천인</th><th>상태</th><th>생성일</th></tr></thead>
+          <thead><tr><th>코드</th><th>추천인</th><th>피추천인</th><th>추천인 할인</th><th>피추천인 할인</th><th>상태</th><th>전환일</th><th>액션</th></tr></thead>
           <tbody id="refBody"></tbody>
         </table>
       </div>
-      <p id="refEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">레퍼럴이 없습니다.</p>
+      <p id="refEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">레퍼럴이 없습니다. '+ 추천 코드 생성'으로 시작하세요.</p>
+    </div>
+
+    <div class="auto-card">
+      <h3 style="margin-bottom:12px">📊 레퍼럴 전환 퍼널</h3>
+      <div id="refFunnel"></div>
     </div>
   </div>
 </section>
 <footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
 <script src="config.js"></script><script src="app.js"></script><script src="event-hub.js"></script>
 <script>
+let curFilter = 'all';
+
 async function load() {
-  const data = await sbQuery('sm_referrals?order=created_at.desc');
-  if (!data.length) return;
-  document.getElementById('refEmpty').style.display='none';
+  let filter = curFilter !== 'all' ? `&status=eq.${curFilter}` : '';
+  const data = await sbQuery(`sm_referrals?order=created_at.desc${filter}`);
+  const total = data.length;
+  const converted = data.filter(r => r.status === 'converted').length;
+  const active = data.filter(r => r.status === 'active').length;
+  const rate = total > 0 ? Math.round(converted / total * 100) : 0;
+
+  document.getElementById('refStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${total}</div><div class="label">전체 코드</div></div>
+    <div class="dash-stat"><div class="number">${active}</div><div class="label">활성</div></div>
+    <div class="dash-stat"><div class="number" style="color:var(--accent)">${converted}</div><div class="label">전환됨</div></div>
+    <div class="dash-stat"><div class="number">${rate}%</div><div class="label">전환율</div></div>`;
+
+  if (!data.length) { document.getElementById('refBody').innerHTML = ''; document.getElementById('refEmpty').style.display = 'block'; return; }
+  document.getElementById('refEmpty').style.display = 'none';
   document.getElementById('refBody').innerHTML = data.map(r => `
-    <tr><td><code style="background:var(--gray-50);padding:2px 8px;border-radius:4px">${r.referral_code}</code></td>
-    <td>#${r.referrer_id||'-'}</td><td>#${r.referred_id||'-'}</td>
-    <td><span class="status-badge ${r.status==='converted'?'status-active':'status-pending'}">${r.status}</span></td>
-    <td>${new Date(r.created_at).toLocaleDateString('ko')}</td></tr>`).join('');
+    <tr>
+      <td><code style="background:var(--gray-50);padding:4px 10px;border-radius:6px;font-weight:700;cursor:pointer" onclick="copyCode('${r.referral_code}')" title="클릭하여 복사">${r.referral_code}</code></td>
+      <td>#${r.referrer_id||'-'}</td>
+      <td>${r.referred_id ? '#'+r.referred_id : '<span style="color:var(--gray-500)">-</span>'}</td>
+      <td>${r.referrer_discount_pct||30}%</td>
+      <td>${r.referred_discount_pct||50}%</td>
+      <td><span class="status-badge ${r.status==='converted'?'status-active':r.status==='active'?'status-contacted':'status-pending'}">${
+        {active:'활성',converted:'전환됨',expired:'만료'}[r.status]||r.status
+      }</span></td>
+      <td>${r.converted_at ? new Date(r.converted_at).toLocaleDateString('ko') : '-'}</td>
+      <td>${r.status==='active'?`<button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="convertRef(${r.id})">전환 처리</button>`:''}</td>
+    </tr>`).join('');
+
+  // 퍼널
+  const funnelStages = [
+    { label: '코드 생성', count: total, color: 'var(--primary)' },
+    { label: '코드 공유', count: Math.round(total * 0.7), color: '#17A2B8' },
+    { label: '피추천인 유입', count: data.filter(r => r.referred_id).length, color: '#FFC107' },
+    { label: '전환 완료', count: converted, color: 'var(--accent)' }
+  ];
+  const maxCount = Math.max(...funnelStages.map(s => s.count), 1);
+  document.getElementById('refFunnel').innerHTML = funnelStages.map(s => `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px">
+        <span>${s.label}</span><span style="font-weight:700">${s.count}명</span>
+      </div>
+      <div style="background:var(--gray-100);border-radius:4px;height:10px;overflow:hidden">
+        <div style="background:${s.color};height:100%;width:${(s.count/maxCount*100).toFixed(0)}%;border-radius:4px"></div>
+      </div>
+    </div>`).join('');
 }
+
+function filterRef(f, btn) {
+  curFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  load();
+}
+
 async function generateCode() {
   const code = 'ONDA-' + Math.random().toString(36).substring(2,8).toUpperCase();
   const custId = prompt('추천인 고객 ID:');
   if (!custId) return;
-  await sbInsert('sm_referrals', { referrer_id: parseInt(custId), referral_code: code });
+  await sbInsert('sm_referrals', { referrer_id: parseInt(custId), referral_code: code, referrer_discount_pct: 30, referred_discount_pct: 50, status: 'active' });
   await EventHub.emit('referral_created', { entity_type:'referral', referral_code:code }, parseInt(custId));
-  alert(`추천 코드: ${code}\n이 코드를 고객에게 전달하세요.`);
+  copyCode(code);
+  alert(`✅ 추천 코드 생성 + 복사됨!\n코드: ${code}`);
   load();
 }
+
+async function convertRef(id) {
+  const refId = prompt('피추천인 고객 ID:');
+  if (!refId) return;
+  const refs = await sbQuery(`sm_referrals?id=eq.${id}`);
+  if (refs.length) {
+    await sbUpdate('sm_referrals', { id }, { referred_id: parseInt(refId), status: 'converted', converted_at: new Date().toISOString() });
+    await EventHub.emit('referral_converted', { entity_type:'referral', referral_code: refs[0].referral_code }, parseInt(refId));
+  }
+  load();
+}
+
+function copyCode(code) {
+  navigator.clipboard.writeText(code).catch(() => {});
+}
+
 load();
 </script>
 </body>

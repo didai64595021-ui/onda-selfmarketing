@@ -1,51 +1,86 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>감사 로그 - ONDA</title>
-<link rel="stylesheet" href="styles.css">
-</head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>감사 로그 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
 <body>
-<header class="header">
-  <div class="header-inner">
-    <a href="index.html" class="logo">ONDA</a>
-    <nav class="nav"><a href="events.html">이벤트</a><a href="audit.html" class="active">감사로그</a><a href="decisions.html">AI판단</a><a href="dashboard.html">대시보드</a></nav>
-    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
-  </div>
-  <div class="mobile-menu"><a href="index.html">홈</a><a href="events.html">이벤트</a><a href="audit.html">감사로그</a><a href="decisions.html">AI판단</a><a href="dashboard.html">대시보드</a></div>
-</header>
-
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
 <section class="section" style="padding-top:100px">
   <div class="container">
-    <h2 style="font-size:28px;font-weight:800;margin-bottom:24px">📜 감사 로그 (Audit Trail)</h2>
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">📜 감사 로그 (Audit Trail)</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">모든 시스템 변경 사항 자동 기록 — 누가, 언제, 무엇을 변경했는지 추적</p>
+
+    <div class="dash-stats" id="auditStats" style="margin-bottom:24px"></div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="filter-tab active" onclick="filterAudit('all',this)">전체</button>
+      <button class="filter-tab" onclick="filterAudit('kakao_friend_verified',this)">💛 카카오 인증</button>
+      <button class="filter-tab" onclick="filterAudit('trial_applied',this)">🧪 체험 신청</button>
+      <button class="filter-tab" onclick="filterAudit('trial_converted',this)">💰 유료 전환</button>
+      <button class="filter-tab" onclick="filterAudit('message_sent',this)">📨 메시지 발송</button>
+      <button class="filter-tab" onclick="filterAudit('churn_risk_detected',this)">⚠️ 위험 감지</button>
+      <button class="filter-tab" onclick="filterAudit('vendor_order_completed',this)">📦 주문 완료</button>
+      <button class="filter-tab" onclick="filterAudit('payment_failed',this)">❌ 결제 실패</button>
+    </div>
+
     <div style="overflow-x:auto">
-      <table class="dash-table" id="auditTable">
-        <thead><tr><th>시간</th><th>Actor</th><th>액션</th><th>테이블</th><th>ID</th><th>사유</th></tr></thead>
+      <table class="dash-table">
+        <thead><tr><th>시각</th><th>이벤트</th><th>대상</th><th>ID</th><th>실행자</th><th>상세</th></tr></thead>
         <tbody id="auditBody"></tbody>
       </table>
     </div>
-    <p id="auditEmpty" style="text-align:center;padding:40px;color:var(--gray-500)">감사 로그가 없습니다.</p>
+    <p id="auditEmpty" style="text-align:center;padding:40px;color:var(--gray-500)">감사 로그가 없습니다. 기능을 사용하면 자동 기록됩니다.</p>
+
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-outline" style="padding:8px 20px;font-size:14px" onclick="loadMore()">더 보기</button>
+    </div>
   </div>
 </section>
 <footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
-<script src="config.js"></script><script src="app.js"></script>
-<script src="event-hub.js"></script>
+<script src="config.js"></script><script src="app.js"></script><script src="event-hub.js"></script>
 <script>
+const typeEmoji = {
+  kakao_friend_verified:'💛', trial_applied:'🧪', trial_converted:'💰', message_sent:'📨',
+  churn_risk_detected:'⚠️', customer_churned:'❌', payment_failed:'💳', vendor_order_completed:'📦',
+  onboarding_completed:'🚀', referral_created:'🤝', referral_converted:'🎁', community_published:'📝',
+  hypothesis_status_changed:'🔬', agency_created:'🏢'
+};
+let curFilter = 'all';
+let curLimit = 50;
+
 async function load() {
-  const data = await sbQuery('sm_audit_log?order=created_at.desc&limit=100');
-  if (!data.length) return;
+  let filter = curFilter !== 'all' ? `&action_type=eq.${curFilter}` : '';
+  const data = await sbQuery(`sm_audit_log?order=created_at.desc&limit=${curLimit}${filter}`);
+  
+  const today = data.filter(d => d.created_at?.startsWith(new Date().toISOString().slice(0,10))).length;
+  const types = [...new Set(data.map(d => d.action_type))].length;
+  document.getElementById('auditStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${data.length}</div><div class="label">전체 로그</div></div>
+    <div class="dash-stat"><div class="number">${today}</div><div class="label">오늘</div></div>
+    <div class="dash-stat"><div class="number">${types}</div><div class="label">이벤트 유형</div></div>`;
+
+  if (!data.length) { document.getElementById('auditBody').innerHTML = ''; document.getElementById('auditEmpty').style.display = 'block'; return; }
   document.getElementById('auditEmpty').style.display = 'none';
-  document.getElementById('auditBody').innerHTML = data.map(a => `
-    <tr>
-      <td style="font-size:13px">${new Date(a.created_at).toLocaleString('ko')}</td>
-      <td>${a.actor}</td>
-      <td><strong>${a.action_type}</strong></td>
-      <td style="font-size:13px">${a.target_table||'-'}</td>
+  document.getElementById('auditBody').innerHTML = data.map(a => {
+    const detail = a.new_value ? JSON.stringify(a.new_value).substring(0,80) : '-';
+    return `<tr>
+      <td style="font-size:12px;white-space:nowrap">${new Date(a.created_at).toLocaleString('ko')}</td>
+      <td><span style="font-size:16px">${typeEmoji[a.action_type]||'📡'}</span> <strong>${a.action_type}</strong></td>
+      <td>${a.target_table||'-'}</td>
       <td>${a.target_id||'-'}</td>
-      <td style="font-size:13px;color:var(--gray-500)">${a.reason||'-'}</td>
-    </tr>`).join('');
+      <td style="font-size:13px">${a.actor||'system'}</td>
+      <td style="font-size:12px;max-width:200px;color:var(--gray-500);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${detail}">${detail}</td>
+    </tr>`;
+  }).join('');
 }
+
+function filterAudit(type, btn) {
+  curFilter = type;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  load();
+}
+
+function loadMore() { curLimit += 50; load(); }
+
 load();
 </script>
 </body>

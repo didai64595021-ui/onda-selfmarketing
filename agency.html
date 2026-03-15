@@ -7,47 +7,179 @@
   <div class="container">
     <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">🏢 대행사 파트너 관리</h2>
     <p style="color:var(--gray-500);margin-bottom:24px">1-5인 소규모 대행사 → AI 주문서 자동생성 → 화이트라벨</p>
+
+    <div class="dash-stats" id="agStats" style="margin-bottom:24px"></div>
+
     <div class="auto-card" style="margin-bottom:24px">
-      <h3 style="margin-bottom:12px">볼륨 할인 구조</h3>
+      <h3 style="margin-bottom:12px">📊 볼륨 할인 구조</h3>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
-        <div style="padding:16px;background:var(--gray-50);border-radius:8px"><strong>Starter</strong><div style="font-size:13px;color:var(--gray-500)">10개 미만</div><div style="font-size:24px;font-weight:800;color:var(--primary)">30%</div></div>
-        <div style="padding:16px;background:var(--gray-50);border-radius:8px"><strong>Growth</strong><div style="font-size:13px;color:var(--gray-500)">10-30개</div><div style="font-size:24px;font-weight:800;color:var(--primary)">35%</div></div>
-        <div style="padding:16px;background:var(--gray-50);border-radius:8px"><strong>Enterprise</strong><div style="font-size:13px;color:var(--gray-500)">30개+</div><div style="font-size:24px;font-weight:800;color:var(--primary)">40%</div></div>
+        <div style="padding:20px;background:var(--gray-50);border-radius:12px;border:2px solid transparent" id="tierStarter">
+          <div style="font-size:13px;color:var(--gray-500)">Starter</div>
+          <strong style="font-size:16px">10개 미만</strong>
+          <div style="font-size:32px;font-weight:800;color:var(--primary);margin:8px 0">30%</div>
+          <div style="font-size:12px;color:var(--gray-500)">마진</div>
+        </div>
+        <div style="padding:20px;background:var(--gray-50);border-radius:12px;border:2px solid transparent" id="tierGrowth">
+          <div style="font-size:13px;color:var(--gray-500)">Growth</div>
+          <strong style="font-size:16px">10-30개</strong>
+          <div style="font-size:32px;font-weight:800;color:var(--primary);margin:8px 0">35%</div>
+          <div style="font-size:12px;color:var(--gray-500)">마진</div>
+        </div>
+        <div style="padding:20px;background:var(--gray-50);border-radius:12px;border:2px solid transparent" id="tierEnterprise">
+          <div style="font-size:13px;color:var(--gray-500)">Enterprise</div>
+          <strong style="font-size:16px">30개+</strong>
+          <div style="font-size:32px;font-weight:800;color:var(--primary);margin:8px 0">40%</div>
+          <div style="font-size:12px;color:var(--gray-500)">마진</div>
+        </div>
       </div>
     </div>
+
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:12px">🎯 대행사 수익 시뮬레이션</h3>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px">
+        <div class="form-group"><label>관리 업체 수</label><input type="number" id="simCount" value="15" min="1" max="100" onchange="simulate()"></div>
+        <div class="form-group"><label>평균 객단가</label><input type="number" id="simPrice" value="65000" min="10000" step="5000" onchange="simulate()"></div>
+      </div>
+      <div id="simResult" style="background:var(--gray-50);border-radius:8px;padding:16px;text-align:center"></div>
+    </div>
+
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h3>대행사 목록</h3>
       <button class="btn btn-primary" style="padding:8px 16px;font-size:14px" onclick="addAgency()">+ 대행사 추가</button>
     </div>
     <div style="overflow-x:auto">
       <table class="dash-table">
-        <thead><tr><th>대행사명</th><th>연락처</th><th>업체 수</th><th>티어</th><th>할인율</th><th>상태</th><th>가입일</th></tr></thead>
+        <thead><tr><th>대행사명</th><th>연락처</th><th>업체 수</th><th>티어</th><th>할인율</th><th>월 매출</th><th>상태</th><th>액션</th></tr></thead>
         <tbody id="agBody"></tbody>
       </table>
     </div>
-    <p id="agEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">대행사가 없습니다.</p>
+    <p id="agEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">대행사가 없습니다. '+ 대행사 추가'로 시작하세요.</p>
   </div>
 </section>
+
+<div id="agModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5)">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:480px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%)">
+    <h3 id="agModalTitle" style="margin-bottom:16px">대행사 추가</h3>
+    <form id="agForm" onsubmit="return saveAgency(event)">
+      <input type="hidden" id="agId">
+      <div class="form-group"><label>대행사명 *</label><input type="text" id="agName" required></div>
+      <div class="form-group"><label>연락처</label><input type="text" id="agContact"></div>
+      <div class="form-group"><label>담당자명</label><input type="text" id="agManager"></div>
+      <div class="form-group"><label>관리 업체 수</label><input type="number" id="agCount" value="0" min="0"></div>
+      <div class="form-group"><label>메모</label><textarea id="agNotes" rows="2"></textarea></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-outline" style="padding:8px 20px" onclick="closeAgModal()">취소</button>
+        <button type="submit" class="btn btn-primary" style="padding:8px 20px">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
-<script src="config.js"></script><script src="app.js"></script>
-<script src="event-hub.js"></script>
+<script src="config.js"></script><script src="app.js"></script><script src="event-hub.js"></script>
 <script>
+function getTier(count) { return count >= 30 ? 'enterprise' : count >= 10 ? 'growth' : 'starter'; }
+function getDiscount(tier) { return { starter:30, growth:35, enterprise:40 }[tier] || 30; }
+
 async function load() {
   const data = await sbQuery('sm_agencies?order=created_at.desc');
-  if (!data.length) return;
-  document.getElementById('agEmpty').style.display='none';
-  document.getElementById('agBody').innerHTML = data.map(a => `
-    <tr><td><strong>${a.name}</strong></td><td>${a.contact||'-'}</td><td>${a.business_count}</td>
-    <td>${a.tier}</td><td>${a.discount_pct}%</td>
-    <td><span class="status-badge ${a.status==='active'?'status-active':'status-pending'}">${a.status}</span></td>
-    <td>${new Date(a.created_at).toLocaleDateString('ko')}</td></tr>`).join('');
+  const total = data.length;
+  const active = data.filter(a => a.status === 'active').length;
+  const totalBiz = data.reduce((s,a) => s + (a.business_count||0), 0);
+  const avgDiscount = data.length ? Math.round(data.reduce((s,a) => s + getDiscount(getTier(a.business_count||0)), 0) / data.length) : 0;
+
+  document.getElementById('agStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${total}</div><div class="label">전체 대행사</div></div>
+    <div class="dash-stat"><div class="number">${active}</div><div class="label">활성</div></div>
+    <div class="dash-stat"><div class="number">${totalBiz}</div><div class="label">총 관리업체</div></div>
+    <div class="dash-stat"><div class="number">${avgDiscount}%</div><div class="label">평균 마진</div></div>`;
+
+  if (!data.length) { document.getElementById('agBody').innerHTML = ''; document.getElementById('agEmpty').style.display = 'block'; return; }
+  document.getElementById('agEmpty').style.display = 'none';
+  document.getElementById('agBody').innerHTML = data.map(a => {
+    const tier = getTier(a.business_count||0);
+    const discount = getDiscount(tier);
+    const revenue = (a.business_count||0) * 65000;
+    return `<tr>
+      <td><strong>${a.name}</strong>${a.contact?'<br><small style="color:var(--gray-500)">'+a.contact+'</small>':''}</td>
+      <td>${a.contact||'-'}</td>
+      <td style="font-weight:700">${a.business_count||0}</td>
+      <td><span style="padding:2px 10px;border-radius:6px;font-size:12px;font-weight:600;background:${tier==='enterprise'?'#343A40':tier==='growth'?'var(--primary)':'var(--accent)'}20;color:${tier==='enterprise'?'#343A40':tier==='growth'?'var(--primary)':'var(--accent)'}">${tier.toUpperCase()}</span></td>
+      <td style="font-weight:700;color:var(--primary)">${discount}%</td>
+      <td>${revenue.toLocaleString()}원</td>
+      <td><span class="status-badge ${a.status==='active'?'status-active':'status-pending'}">${a.status==='active'?'활성':'대기'}</span></td>
+      <td>
+        <button onclick="editAgency(${a.id})" style="padding:4px 8px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:12px">✏️</button>
+        <button onclick="toggleAgency(${a.id},'${a.status}')" style="padding:4px 8px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:12px">${a.status==='active'?'⏸️':'▶️'}</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
-async function addAgency() {
-  const name = prompt('대행사명:'); if (!name) return;
-  const contact = prompt('연락처:');
-  await sbInsert('sm_agencies', { name, contact });
+
+function simulate() {
+  const count = +document.getElementById('simCount').value;
+  const price = +document.getElementById('simPrice').value;
+  const tier = getTier(count);
+  const margin = getDiscount(tier);
+  const totalRevenue = count * price;
+  const profit = Math.round(totalRevenue * margin / 100);
+  document.getElementById('simResult').innerHTML = `
+    <div style="font-size:14px;color:var(--gray-500);margin-bottom:4px">티어: <strong>${tier.toUpperCase()}</strong> (마진 ${margin}%)</div>
+    <div style="font-size:14px;margin-bottom:8px">월 매출: <strong>${totalRevenue.toLocaleString()}원</strong></div>
+    <div style="font-size:24px;font-weight:800;color:var(--primary)">대행사 수익: ${profit.toLocaleString()}원/월</div>`;
+  // 티어 하이라이트
+  ['Starter','Growth','Enterprise'].forEach(t => document.getElementById('tier'+t).style.borderColor = 'transparent');
+  document.getElementById('tier'+tier.charAt(0).toUpperCase()+tier.slice(1)).style.borderColor = 'var(--primary)';
+}
+
+function addAgency() {
+  document.getElementById('agModalTitle').textContent = '대행사 추가';
+  document.getElementById('agForm').reset();
+  document.getElementById('agId').value = '';
+  document.getElementById('agModal').style.display = 'block';
+}
+
+async function editAgency(id) {
+  const data = await sbQuery(`sm_agencies?id=eq.${id}`);
+  if (!data.length) return;
+  const a = data[0];
+  document.getElementById('agModalTitle').textContent = '대행사 수정';
+  document.getElementById('agId').value = id;
+  document.getElementById('agName').value = a.name;
+  document.getElementById('agContact').value = a.contact || '';
+  document.getElementById('agCount').value = a.business_count || 0;
+  document.getElementById('agModal').style.display = 'block';
+}
+
+async function saveAgency(e) {
+  e.preventDefault();
+  const id = document.getElementById('agId').value;
+  const count = +document.getElementById('agCount').value;
+  const data = {
+    name: document.getElementById('agName').value,
+    contact: document.getElementById('agContact').value || null,
+    business_count: count,
+    tier: getTier(count),
+    discount_pct: getDiscount(getTier(count)),
+    status: 'active'
+  };
+  if (id) await sbUpdate('sm_agencies', { id: +id }, data);
+  else {
+    await sbInsert('sm_agencies', data);
+    await EventHub.emit('agency_created', { entity_type:'agency', name:data.name, tier:data.tier });
+  }
+  closeAgModal(); load();
+  return false;
+}
+
+async function toggleAgency(id, cur) {
+  await sbUpdate('sm_agencies', { id }, { status: cur === 'active' ? 'inactive' : 'active' });
   load();
 }
+
+function closeAgModal() { document.getElementById('agModal').style.display = 'none'; }
+
+simulate();
 load();
 </script>
 </body>
