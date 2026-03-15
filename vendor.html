@@ -38,6 +38,39 @@
 
     <div class="dash-stats" id="orderStats" style="margin-bottom:24px"></div>
 
+    <!-- 안티패턴 엔진 적용 정보 -->
+    <div class="card" style="margin-bottom:24px;border-left:4px solid var(--primary)">
+      <h3 style="margin-bottom:8px;font-size:16px">🧠 안티패턴 엔진 적용 현황</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:13px">
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px">
+          <strong>요일 가중치</strong>
+          <div style="color:var(--gray-500);margin-top:4px" id="dayWeight">-</div>
+        </div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px">
+          <strong>L1 볼륨 노이즈</strong>
+          <div style="color:var(--gray-500);margin-top:4px">±40% 가우시안</div>
+        </div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px">
+          <strong>L3 미션 믹스</strong>
+          <div style="color:var(--gray-500);margin-top:4px">길찾기 0% · 유입 54%</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:13px;margin-top:8px">
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px">
+          <strong>L4 매체 비율</strong>
+          <div style="color:var(--gray-500);margin-top:4px">3일 연속 동일 금지</div>
+        </div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px">
+          <strong>키워드 배분</strong>
+          <div style="color:var(--gray-500);margin-top:4px">efficiency 기반 채널 선택</div>
+        </div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px">
+          <strong>Rate Limiter</strong>
+          <div style="color:var(--gray-500);margin-top:4px">유입 60-180초 간격</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 긴급 배너 -->
     <div id="urgentBanner" style="display:none;background:#FFF3CD;border:2px solid #FFC107;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center">
       <strong style="color:#856404">⚠️ 긴급 매체 전환 주문이 있습니다!</strong>
@@ -64,6 +97,12 @@
 <script>
 let curFilter = 'all';
 document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('ko', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+// 요일 가중치 표시
+const dayWeights = {0:120,1:100,2:100,3:50,4:100,5:50,6:50};
+const dayNames = ['일','월','화','수','목','금','토'];
+const today = new Date().getDay();
+document.getElementById('dayWeight').textContent = `오늘(${dayNames[today]}): ${dayWeights[today]}% ${dayWeights[today]<100?'⬇️ 감소':''}`;
+
 
 async function loadOrders() {
   let filter = curFilter !== 'all' ? `&status=eq.${curFilter}` : '';

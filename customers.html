@@ -37,6 +37,62 @@
 
     <div class="filter-tabs" id="statusFilter" style="margin-bottom:16px"></div>
 
+    <!-- 고객 세그먼트 (A/B/C/D) -->
+    <div class="card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:12px">📊 고객 세그먼트</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div style="padding:16px;background:rgba(0,200,83,0.08);border-radius:10px;border-left:4px solid #00C853;text-align:center" id="segA">
+          <div style="font-size:14px;font-weight:700">A) 신규 매장</div>
+          <div style="font-size:11px;color:var(--gray-500)">개업 3개월 이내</div>
+          <div style="font-size:24px;font-weight:800;margin-top:4px" id="segACount">0</div>
+          <div style="font-size:11px;color:var(--gray-500)">일 150타 테스트</div>
+        </div>
+        <div style="padding:16px;background:rgba(0,102,255,0.08);border-radius:10px;border-left:4px solid var(--primary);text-align:center">
+          <div style="font-size:14px;font-weight:700">B) 성장 매장</div>
+          <div style="font-size:11px;color:var(--gray-500)">리뷰10-50, 순위5-15</div>
+          <div style="font-size:24px;font-weight:800;margin-top:4px" id="segBCount">0</div>
+          <div style="font-size:11px;color:var(--gray-500)">핵심 타겟 🎯</div>
+        </div>
+        <div style="padding:16px;background:rgba(255,193,7,0.08);border-radius:10px;border-left:4px solid #FFC107;text-align:center">
+          <div style="font-size:14px;font-weight:700">C) 유지 매장</div>
+          <div style="font-size:11px;color:var(--gray-500)">리뷰100+, 순위1-3</div>
+          <div style="font-size:24px;font-weight:800;margin-top:4px" id="segCCount">0</div>
+          <div style="font-size:11px;color:var(--gray-500)">방어+경쟁감시</div>
+        </div>
+        <div style="padding:16px;background:rgba(244,67,54,0.08);border-radius:10px;border-left:4px solid #F44336;text-align:center">
+          <div style="font-size:14px;font-weight:700">D) 저성과 매장</div>
+          <div style="font-size:11px;color:var(--gray-500)">리뷰50+, 순위20+</div>
+          <div style="font-size:24px;font-weight:800;margin-top:4px" id="segDCount">0</div>
+          <div style="font-size:11px;color:var(--gray-500)">컨설팅 전환</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 부스트 모드 & 이탈 예측 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="card">
+        <h3 style="margin-bottom:8px">🚀 온보딩 부스트 모드</h3>
+        <div style="font-size:13px;color:var(--gray-500)">
+          <div style="padding:6px 0;border-bottom:1px solid var(--gray-100)">D1-D7: <strong>180-200타</strong> + 리뷰 3건</div>
+          <div style="padding:6px 0;border-bottom:1px solid var(--gray-100)">D8-D14: <strong>150타</strong>(표준) + 주간 리포트</div>
+          <div style="padding:6px 0">D15+: <strong>AI 최적화</strong> + D30 ROI</div>
+        </div>
+        <div style="margin-top:8px;padding:8px 12px;background:#D4EDDA;border-radius:6px;font-size:12px">히스테리시스: AT_RISK 진입 60점, 복귀 40점</div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:8px">⚠️ 이탈 예측 요소 (churn_risk)</h3>
+        <div style="font-size:13px;color:var(--gray-500)">
+          <div style="padding:4px 0">로그인 빈도 감소 <strong>+20</strong></div>
+          <div style="padding:4px 0">알림 읽음률 &lt;30% <strong>+15</strong></div>
+          <div style="padding:4px 0">추가 구매 0 <strong>+15</strong></div>
+          <div style="padding:4px 0">N2 2주 하락 <strong>+20</strong></div>
+          <div style="padding:4px 0">결제일 7일전 접속0 <strong>+15</strong></div>
+          <div style="padding:4px 0">가입 2개월째 <strong>+15</strong></div>
+        </div>
+        <div style="margin-top:4px;font-size:12px;color:var(--gray-500)">≥60: 선제 대응 · ≥80: CEO 직접</div>
+      </div>
+    </div>
+
     <div style="overflow-x:auto">
       <table class="dash-table">
         <thead>

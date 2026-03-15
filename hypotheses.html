@@ -50,6 +50,60 @@
     </div>
 
     <div id="hypoList"></div>
+
+    <!-- 교란변수 체크 (confounding_factor_check) -->
+    <div class="card" style="margin-top:32px">
+      <h3 style="margin-bottom:16px">🔬 인과관계 vs 상관관계 (Confounding Factor Check)</h3>
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px">모든 가설 검증 시 4가지 교란변수를 반드시 체크. 보정된 effect = raw - market - season - competition</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+        <div style="padding:16px;background:var(--gray-50);border-radius:10px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">1️⃣ 시장 전체 상승?</div>
+          <p style="font-size:13px;color:var(--gray-500)">같은 기간 비관리 87K의 N2도 올랐는가? → 로직 변경/시장 전체 상승 착시</p>
+        </div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:10px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">2️⃣ 시즌 효과?</div>
+          <p style="font-size:13px;color:var(--gray-500)">같은 기간 해당 업종 전체의 N2가 올랐는가? → 시즌 캘린더 교차 확인</p>
+        </div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:10px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">3️⃣ 경쟁사 이탈?</div>
+          <p style="font-size:13px;color:var(--gray-500)">해당 키워드 경쟁사가 이탈/약화했는가? → 상대적 상승 착시</p>
+        </div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:10px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">4️⃣ 복합 효과?</div>
+          <p style="font-size:13px;color:var(--gray-500)">다른 투입(리뷰, 블로그)이 동시에 있었는가? → 단일 변수 분리 불가</p>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:#FFF3CD;border-radius:8px;font-size:13px">
+        💡 <strong>보정 후에도 양수면 순수 효과 존재.</strong> 0 이하면 외부 요인 착시. adjusted_effect 기반으로만 validation.
+      </div>
+    </div>
+
+    <!-- 규칙 충돌 감지 -->
+    <div class="card" style="margin-top:24px">
+      <h3 style="margin-bottom:16px">⚔️ 규칙 충돌 감지 (Rule Conflict Checker)</h3>
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px">같은 variable_category의 active 규칙들을 페어로 비교. 방향 반대면 충돌.</p>
+      <div id="conflictCheck" style="padding:20px;text-align:center;color:var(--gray-500)">검증된 가설 등록 후 자동 감지</div>
+    </div>
+
+    <!-- 검증 최소 조건 -->
+    <div class="card" style="margin-top:24px">
+      <h3 style="margin-bottom:16px">📏 검증 최소 조건 (3가지 전부 충족)</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <div style="padding:20px;background:var(--gray-50);border-radius:10px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--primary)">10+</div>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">표본 수</div>
+        </div>
+        <div style="padding:20px;background:var(--gray-50);border-radius:10px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--primary)">> 0.005</div>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">effect_size (N2 기준)</div>
+        </div>
+        <div style="padding:20px;background:var(--gray-50);border-radius:10px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--primary)">60%+</div>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">양성률</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--gray-500);margin-top:8px">하나라도 미달이면 insufficient_data 상태 유지. 자동 적용 불가.</p>
+    </div>
   </div>
 </section>
 
