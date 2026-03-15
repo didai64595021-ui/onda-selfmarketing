@@ -15,11 +15,11 @@ const EventHub = {
   async emit(eventType, payload, customerId = null) {
     console.log(`[EventHub] ${eventType}`, payload);
 
-    // 1. 이벤트 버스에 기록
+    // 1. 이벤트 버스에 기록 (컬럼: event_type, payload, source_cron, status)
     await sbInsert('sm_event_bus', {
       event_type: eventType,
       payload: payload,
-      source: 'frontend',
+      source_cron: 'frontend',
       status: 'new'
     }).catch(e => console.warn('event_bus insert failed', e));
 
@@ -32,12 +32,12 @@ const EventHub = {
       }).catch(e => console.warn('customer_event insert failed', e));
     }
 
-    // 3. 감사 로그
+    // 3. 감사 로그 (컬럼: actor, action_type, target_table, target_id, new_value)
     await sbInsert('sm_audit_log', {
-      action: eventType,
-      entity_type: payload.entity_type || 'system',
-      entity_id: customerId || payload.entity_id || null,
-      details: payload,
+      action_type: eventType,
+      target_table: payload.entity_type || 'system',
+      target_id: customerId || payload.entity_id || null,
+      new_value: payload,
       actor: 'system'
     }).catch(e => console.warn('audit_log insert failed', e));
 
@@ -101,19 +101,20 @@ const EventHub = {
       case 'churn_risk_detected':
         if (customerId) {
           await sbUpdate('sm_customers', { id: customerId }, { status: 'at_risk' });
-          // → 리마케팅 큐에 자동 추가
+          // → 리마케팅 큐에 자동 추가 (stage=integer: 1=알림,2=리마인드,3=특별제안,4=최종)
           await sbInsert('sm_remarketing_queue', {
             customer_id: customerId,
-            stage: 'at_risk_alert',
+            stage: 1,
+            message_type: 'at_risk_alert',
             scheduled_at: new Date().toISOString(),
-            message: `[자동] 이탈 위험 감지 - 위험도 ${payload.risk_score}%`
+            status: 'pending'
           });
-          // → 위험 알림
+          // → 위험 알림 (alert_type: conversion_drop|churn_spike|account_ban|trial_conversion_drop|target_depletion)
           await sbInsert('sm_risk_alerts', {
-            alert_type: 'churn_risk',
+            alert_type: 'churn_spike',
             severity: payload.risk_score > 80 ? 'critical' : 'warning',
-            customer_id: customerId,
-            details: payload
+            condition_met: `customer ${customerId}: risk ${payload.risk_score}%`,
+            is_resolved: false
           });
         }
         break;
@@ -124,10 +125,10 @@ const EventHub = {
           // → 자동 결제 실패 대응 플로우
           await sbRpc('handle_payment_failure', { payment_id: payload.payment_id }).catch(() => {});
           await sbInsert('sm_risk_alerts', {
-            alert_type: 'payment_failure',
+            alert_type: 'churn_spike',
             severity: 'critical',
-            customer_id: customerId,
-            details: payload
+            condition_met: `customer ${customerId}: payment failed`,
+            is_resolved: false
           });
         }
         break;
@@ -145,9 +146,10 @@ const EventHub = {
           const winbackDate = new Date(Date.now() + 30 * 86400000).toISOString();
           await sbInsert('sm_remarketing_queue', {
             customer_id: customerId,
-            stage: 'winback',
+            stage: 4,
+            message_type: 'winback',
             scheduled_at: winbackDate,
-            message: '[자동] 30일 윈백 시퀀스'
+            status: 'pending'
           });
           await this.updateKpi('churn', 1);
         }
@@ -203,9 +205,12 @@ const EventHub = {
         if (payload.source) {
           const lb = await sbQuery(`sm_source_leaderboard?source_name=eq.${payload.source}`);
           if (lb.length) {
+            // 리더보드 alpha/beta 업데이트 (Thompson Sampling)
+            const isSuccess = payload.success !== false;
             await sbUpdate('sm_source_leaderboard', { id: lb[0].id }, {
-              total_orders: (lb[0].total_orders || 0) + 1,
-              total_spent: (lb[0].total_spent || 0) + (payload.cost || 0)
+              alpha: (lb[0].alpha || 1) + (isSuccess ? 1 : 0),
+              beta: (lb[0].beta || 1) + (isSuccess ? 0 : 1),
+              last_updated: new Date().toISOString()
             });
           }
         }
@@ -268,12 +273,12 @@ const EventHub = {
     if (hits > 0) {
       await sbInsert('sm_vendor_orders', {
         customer_id: customerId,
-        order_type: 'traffic',
-        source: 'auto_assigned',
+        source_name: 'auto_assigned',
         keyword: c.keyword,
-        hits: hits,
+        total_volume: hits,
         status: 'pending',
-        notes: `[자동] ${c.store_name} 전환 → ${c.package} 패키지 투입 시작`
+        notes: `[자동] ${c.store_name} 전환 → ${c.package} 패키지 투입 시작`,
+        order_date: new Date().toISOString().split('T')[0]
       });
     }
   },
@@ -293,13 +298,14 @@ const EventHub = {
   // ===== KPI 업데이트 =====
   async updateKpi(metric, value) {
     const today = new Date().toISOString().split('T')[0];
-    const existing = await sbQuery(`sm_kpi_tracking?metric=eq.${metric}&date=eq.${today}`);
+    const existing = await sbQuery(`sm_kpi_tracking?metric_name=eq.${metric}&period_date=eq.${today}`);
     if (existing.length) {
       await sbUpdate('sm_kpi_tracking', { id: existing[0].id }, {
-        value: (existing[0].value || 0) + value
+        actual_value: (existing[0].actual_value || 0) + value,
+        achievement_pct: existing[0].target_value ? Math.round(((existing[0].actual_value||0)+value)/existing[0].target_value*100) : null
       });
     } else {
-      await sbInsert('sm_kpi_tracking', { metric, date: today, value });
+      await sbInsert('sm_kpi_tracking', { metric_name: metric, period_date: today, period_type: 'daily', actual_value: value });
     }
   },
 
