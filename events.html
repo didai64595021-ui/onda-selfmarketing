@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이벤트 버스 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="events.html" class="active">이벤트</a>
+      <a href="audit.html">감사로그</a>
+      <a href="decisions.html">AI판단</a>
+      <a href="dashboard.html">대시보드</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="events.html">이벤트</a><a href="audit.html">감사로그</a>
+    <a href="decisions.html">AI판단</a><a href="hotleads.html">핫리드</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+      <h2 style="font-size:28px;font-weight:800">📡 이벤트 버스 모니터</h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" style="padding:8px 16px;font-size:14px" onclick="emitEvent()">+ 이벤트 발행</button>
+        <button class="btn btn-primary" style="padding:8px 16px;font-size:14px" onclick="load()">🔄</button>
+      </div>
+    </div>
+
+    <div class="dash-stats" id="eventStats" style="margin-bottom:24px"></div>
+
+    <div class="filter-tabs" style="margin-bottom:16px">
+      <button class="filter-tab active" onclick="setF('all',this)">전체</button>
+      <button class="filter-tab" onclick="setF('pending',this)">대기</button>
+      <button class="filter-tab" onclick="setF('consumed',this)">소비됨</button>
+    </div>
+
+    <div id="eventList"></div>
+  </div>
+</section>
+
+<!-- 이벤트 발행 모달 -->
+<div id="emitModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5)">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;margin:auto;position:relative;top:50%;transform:translateY(-50%)">
+    <h3 style="margin-bottom:16px">이벤트 발행</h3>
+    <form onsubmit="return saveEvent(event)">
+      <div class="form-group"><label>이벤트 유형</label>
+        <select id="eType"><option value="logic_change">로직 변경</option><option value="blog_filtering">블로그 필터링</option>
+        <option value="pattern_detected">패턴 감지</option><option value="reflection_delay">반영 지연</option>
+        <option value="seasonal">계절/자연</option><option value="source_anomaly">매체 이상</option></select>
+      </div>
+      <div class="form-group"><label>우선순위</label>
+        <select id="ePriority"><option value="0">일반</option><option value="1">높음</option><option value="2">긴급 (동기)</option></select>
+      </div>
+      <div class="form-group"><label>페이로드 (JSON)</label>
+        <textarea id="ePayload" rows="4" placeholder='{"affected_businesses": [1,2,3]}'></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-outline" style="padding:8px 20px" onclick="document.getElementById('emitModal').style.display='none'">취소</button>
+        <button type="submit" class="btn btn-primary" style="padding:8px 20px">발행</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let curF = 'all';
+const typeEmoji = { logic_change:'🔄', blog_filtering:'📝', pattern_detected:'⚠️', reflection_delay:'⏳', seasonal:'🌸', source_anomaly:'🔴' };
+const priorityLabel = { 0:'일반', 1:'높음', 2:'🚨 긴급' };
+
+async function load() {
+  let filter = curF === 'pending' ? '&status=eq.pending' : curF === 'consumed' ? '&status=neq.pending' : '';
+  const data = await sbQuery(`sm_event_bus?order=created_at.desc&limit=50${filter}`);
+  
+  const pending = data.filter(e => e.status === 'pending').length;
+  const expired = data.filter(e => new Date(e.expires_at) < new Date()).length;
+  document.getElementById('eventStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${data.length}</div><div class="label">전체</div></div>
+    <div class="dash-stat"><div class="number">${pending}</div><div class="label">대기</div></div>
+    <div class="dash-stat"><div class="number">${expired}</div><div class="label">만료</div></div>
+    <div class="dash-stat"><div class="number">${data.filter(e=>e.priority>=2).length}</div><div class="label">긴급</div></div>`;
+  
+  document.getElementById('eventList').innerHTML = data.length ? data.map(e => {
+    const isExpired = new Date(e.expires_at) < new Date();
+    return `<div class="card" style="margin-bottom:12px;${e.priority>=2?'border-left:4px solid #dc3545':''}${isExpired?';opacity:0.5':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span>${typeEmoji[e.event_type]||'📡'}</span>
+            <strong>${e.event_type}</strong>
+            <span class="status-badge ${e.status==='pending'?'status-pending':'status-active'}">${e.status}</span>
+            <span style="font-size:12px;color:${e.priority>=2?'#dc3545':e.priority>=1?'#fd7e14':'var(--gray-500)'}">${priorityLabel[e.priority]||e.priority}</span>
+          </div>
+          <div style="font-size:13px;color:var(--gray-500)">${new Date(e.created_at).toLocaleString('ko')} | 만료: ${new Date(e.expires_at).toLocaleString('ko')}</div>
+          ${e.payload ? `<pre style="font-size:12px;margin-top:8px;background:var(--gray-50);padding:8px;border-radius:4px;max-height:100px;overflow:auto">${JSON.stringify(e.payload, null, 2)}</pre>` : ''}
+        </div>
+        ${e.status === 'pending' ? `<button class="btn btn-outline" style="padding:4px 12px;font-size:12px" onclick="consume(${e.id})">소비</button>` : ''}
+      </div>
+    </div>`;
+  }).join('') : '<p style="text-align:center;padding:40px;color:var(--gray-500)">이벤트가 없습니다.</p>';
+}
+
+function setF(f, btn) { curF = f; document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); load(); }
+function emitEvent() { document.getElementById('emitModal').style.display = 'block'; }
+
+async function saveEvent(e) {
+  e.preventDefault();
+  let payload = null;
+  try { payload = JSON.parse(document.getElementById('ePayload').value || 'null'); } catch(err) {}
+  await sbInsert('sm_event_bus', {
+    event_type: document.getElementById('eType').value,
+    priority: parseInt(document.getElementById('ePriority').value),
+    payload,
+    source_cron: 'manual'
+  });
+  document.getElementById('emitModal').style.display = 'none';
+  load();
+  return false;
+}
+
+async function consume(id) {
+  await sbUpdate('sm_event_bus', { id }, { status: 'consumed', consumed_by: ['dashboard'] });
+  load();
+}
+
+load();
+</script>
+</body>
+</html>

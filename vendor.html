@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>외주 포털 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav">
+      <a href="vendor.html" class="active">외주 포털</a>
+      <a href="leaderboard.html">매체 리더보드</a>
+      <a href="dashboard.html">대시보드</a>
+    </nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu">
+    <a href="index.html">홈</a><a href="vendor.html">외주 포털</a><a href="leaderboard.html">매체 리더보드</a>
+    <a href="hotleads.html">핫리드</a><a href="customers.html">고객관리</a><a href="dashboard.html">대시보드</a>
+  </div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+      <div>
+        <h2 style="font-size:28px;font-weight:800">📦 오늘의 주문서</h2>
+        <p style="color:var(--gray-500);font-size:14px" id="dateLabel"></p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="padding:8px 20px;font-size:14px" onclick="generateAll()">⚡ 전체 주문서 생성</button>
+      </div>
+    </div>
+
+    <div class="dash-stats" id="orderStats" style="margin-bottom:24px"></div>
+
+    <!-- 긴급 배너 -->
+    <div id="urgentBanner" style="display:none;background:#FFF3CD;border:2px solid #FFC107;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center">
+      <strong style="color:#856404">⚠️ 긴급 매체 전환 주문이 있습니다!</strong>
+    </div>
+
+    <div class="filter-tabs" style="margin-bottom:16px">
+      <button class="filter-tab active" onclick="filterOrders('all',this)">전체</button>
+      <button class="filter-tab" onclick="filterOrders('pending',this)">대기</button>
+      <button class="filter-tab" onclick="filterOrders('in_progress',this)">진행중</button>
+      <button class="filter-tab" onclick="filterOrders('completed',this)">완료</button>
+    </div>
+
+    <div id="ordersList"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let curFilter = 'all';
+document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('ko', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+async function loadOrders() {
+  let filter = curFilter !== 'all' ? `&status=eq.${curFilter}` : '';
+  const orders = await sbQuery(`sm_vendor_orders?order=created_at.desc&limit=50${filter}&order_date=eq.${new Date().toISOString().slice(0,10)}`);
+  
+  // Stats
+  const all = await sbQuery(`sm_vendor_orders?order_date=eq.${new Date().toISOString().slice(0,10)}`);
+  const pending = all.filter(o => o.status === 'pending').length;
+  const completed = all.filter(o => o.status === 'completed').length;
+  const totalVol = all.reduce((s,o) => s + (o.total_volume||0), 0);
+  const urgent = all.filter(o => o.is_urgent).length;
+  
+  document.getElementById('orderStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${all.length}</div><div class="label">전체 주문</div></div>
+    <div class="dash-stat"><div class="number">${pending}</div><div class="label">대기</div></div>
+    <div class="dash-stat"><div class="number">${completed}</div><div class="label">완료</div></div>
+    <div class="dash-stat"><div class="number">${totalVol.toLocaleString()}</div><div class="label">총 투입량</div></div>`;
+  
+  if (urgent > 0) document.getElementById('urgentBanner').style.display = 'block';
+  
+  const list = orders.length ? orders : all;
+  document.getElementById('ordersList').innerHTML = list.length ? list.map(o => {
+    const mix = o.mission_mix || {};
+    const time = o.time_distribution || {};
+    return `<div class="card" style="margin-bottom:16px;${o.is_urgent?'border:2px solid #FFC107':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            ${o.is_urgent?'<span style="background:#FFC107;color:#856404;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">🚨 긴급</span>':''}
+            <strong style="font-size:18px">${o.keyword || '키워드 미정'}</strong>
+            <span class="status-badge ${o.status==='pending'?'status-pending':o.status==='completed'?'status-active':'status-contacted'}">${
+              {pending:'대기',in_progress:'진행중',completed:'완료',cancelled:'취소'}[o.status]||o.status
+            }</span>
+          </div>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:14px;color:var(--gray-500)">
+            <span>매체: <strong style="color:var(--gray-900)">${o.source_name||'-'}</strong></span>
+            <span>투입량: <strong style="color:var(--primary)">${o.total_volume}타</strong></span>
+            <span>고객: #${o.customer_id||'-'}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          ${o.status === 'pending' ? `<button class="btn btn-primary" style="padding:6px 16px;font-size:13px" onclick="updateOrder(${o.id},'in_progress')">시작</button>` : ''}
+          ${o.status === 'in_progress' ? `<button class="btn btn-primary" style="padding:6px 16px;font-size:13px;background:var(--accent)" onclick="updateOrder(${o.id},'completed')">완료</button>` : ''}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+        <div style="padding:12px;background:var(--gray-50);border-radius:8px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px">미션 믹스</div>
+          ${Object.entries(mix).map(([k,v]) => `<div style="display:flex;justify-content:space-between;font-size:13px"><span>${k}</span><span style="font-weight:600">${v}%</span></div>`).join('')}
+        </div>
+        <div style="padding:12px;background:var(--gray-50);border-radius:8px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px">시간 분배</div>
+          ${Object.entries(time).map(([k,v]) => `<div style="display:flex;justify-content:space-between;font-size:13px"><span>${k}</span><span style="font-weight:600">${v}%</span></div>`).join('')}
+        </div>
+      </div>
+      ${o.notes ? `<div style="margin-top:12px;padding:8px 12px;background:#FFF3CD;border-radius:6px;font-size:13px">📝 ${o.notes}</div>` : ''}
+    </div>`;
+  }).join('') : '<p style="text-align:center;padding:40px;color:var(--gray-500)">오늘 주문서가 없습니다. "전체 주문서 생성"을 눌러주세요.</p>';
+}
+
+async function updateOrder(id, status) {
+  const body = { status };
+  if (status === 'completed') body.completed_at = new Date().toISOString();
+  await sbUpdate('sm_vendor_orders', { id }, body);
+  loadOrders();
+}
+
+async function generateAll() {
+  const btn = event.target; btn.disabled = true; btn.textContent = '생성 중...';
+  const customers = await sbQuery('sm_customers?status=in.(active,onboarding,trial)');
+  let count = 0;
+  for (const c of customers) {
+    try { await sbRpc('generate_vendor_order', { cust_id: c.id }); count++; } catch(e) {}
+  }
+  alert(`${count}개 주문서 생성 완료!`);
+  btn.disabled = false; btn.textContent = '⚡ 전체 주문서 생성';
+  loadOrders();
+}
+
+function filterOrders(f, btn) {
+  curFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  loadOrders();
+}
+
+loadOrders();
+</script>
+</body>
+</html>

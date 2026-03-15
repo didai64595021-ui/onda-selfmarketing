@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>감사 로그 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav"><a href="events.html">이벤트</a><a href="audit.html" class="active">감사로그</a><a href="decisions.html">AI판단</a><a href="dashboard.html">대시보드</a></nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu"><a href="index.html">홈</a><a href="events.html">이벤트</a><a href="audit.html">감사로그</a><a href="decisions.html">AI판단</a><a href="dashboard.html">대시보드</a></div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:24px">📜 감사 로그 (Audit Trail)</h2>
+    <div style="overflow-x:auto">
+      <table class="dash-table" id="auditTable">
+        <thead><tr><th>시간</th><th>Actor</th><th>액션</th><th>테이블</th><th>ID</th><th>사유</th></tr></thead>
+        <tbody id="auditBody"></tbody>
+      </table>
+    </div>
+    <p id="auditEmpty" style="text-align:center;padding:40px;color:var(--gray-500)">감사 로그가 없습니다.</p>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+async function load() {
+  const data = await sbQuery('sm_audit_log?order=created_at.desc&limit=100');
+  if (!data.length) return;
+  document.getElementById('auditEmpty').style.display = 'none';
+  document.getElementById('auditBody').innerHTML = data.map(a => `
+    <tr>
+      <td style="font-size:13px">${new Date(a.created_at).toLocaleString('ko')}</td>
+      <td>${a.actor}</td>
+      <td><strong>${a.action_type}</strong></td>
+      <td style="font-size:13px">${a.target_table||'-'}</td>
+      <td>${a.target_id||'-'}</td>
+      <td style="font-size:13px;color:var(--gray-500)">${a.reason||'-'}</td>
+    </tr>`).join('');
+}
+load();
+</script>
+</body>
+</html>

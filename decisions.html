@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 판단 로그 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">ONDA</a>
+    <nav class="nav"><a href="events.html">이벤트</a><a href="audit.html">감사로그</a><a href="decisions.html" class="active">AI판단</a><a href="dashboard.html">대시보드</a></nav>
+    <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu"><a href="index.html">홈</a><a href="events.html">이벤트</a><a href="audit.html">감사로그</a><a href="decisions.html">AI판단</a><a href="dashboard.html">대시보드</a></div>
+</header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">🤖 AI 판단 로그</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">모든 AI 의사결정의 이유와 대안을 기록합니다</p>
+    
+    <button class="btn btn-outline" style="margin-bottom:16px;padding:8px 16px;font-size:14px" onclick="addDemo()">+ 데모 판단 추가</button>
+    
+    <div id="decisionList"></div>
+    <p id="decEmpty" style="text-align:center;padding:40px;color:var(--gray-500)">AI 판단 로그가 없습니다.</p>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+const confColor = { low:'#dc3545', medium:'#fd7e14', high:'#28a745' };
+async function load() {
+  const data = await sbQuery('sm_decision_log?order=created_at.desc&limit=50');
+  if (!data.length) return;
+  document.getElementById('decEmpty').style.display = 'none';
+  document.getElementById('decisionList').innerHTML = data.map(d => `
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <strong>${d.decision_type}</strong>
+            <span style="font-size:12px;padding:2px 8px;border-radius:10px;background:${confColor[d.confidence]||'#eee'}20;color:${confColor[d.confidence]||'#666'};font-weight:700">${d.confidence||'-'}</span>
+          </div>
+          <p style="font-size:14px;margin-bottom:8px">${d.action_taken||''}</p>
+          <div style="font-size:13px;color:var(--gray-500)">
+            <strong>사유:</strong> ${d.reasoning_summary||'-'}<br>
+            <strong>대안:</strong> ${d.alternative_considered||'-'}<br>
+            <strong>데이터 포인트:</strong> ${d.data_points_used||0}개
+          </div>
+        </div>
+        <span style="font-size:12px;color:var(--gray-500)">${new Date(d.created_at).toLocaleString('ko')}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function addDemo() {
+  const demos = [
+    { decision_type:'매체 전환', action_taken:'말차 → 퍼플페퍼신규 전환', reasoning_summary:'N2 4일 연속 하락, 말차 효율 저하 감지. 퍼플페퍼신규 최근 양성률 72%로 가장 높음', confidence:'medium', data_points_used:12, alternative_considered:'뭉치 (양성률 60%, 비용효율 높음)' },
+    { decision_type:'투입량 조정', action_taken:'일 150타 → 120타 감소', reasoning_summary:'수요일 요일가중치 적용 (50%). 기본 150 × 0.5 + 노이즈', confidence:'high', data_points_used:30, alternative_considered:'150타 유지 (요일가중치 무시)' },
+    { decision_type:'로직 변경 감지', action_taken:'전 고객 주문서 48시간 보류', reasoning_summary:'87K 전체 N2 중앙값 2σ 이상 변동 감지. 산업 전체 영향', confidence:'medium', data_points_used:91019, alternative_considered:'개별 업체만 보류' }
+  ];
+  const demo = demos[Math.floor(Math.random() * demos.length)];
+  await sbInsert('sm_decision_log', demo);
+  load();
+}
+
+load();
+</script>
+</body>
+</html>
