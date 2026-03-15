@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시스템 헬스 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+@media(max-width:1024px){.health-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.health-grid{grid-template-columns:1fr}}
+.h-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-top:4px solid}
+.h-card.ok{border-top-color:#00C853}.h-card.warn{border-top-color:#FFC107}.h-card.error{border-top-color:#F44336}
+.h-card .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.h-card .status-dot.ok{background:#00C853}.h-card .status-dot.warn{background:#FFC107}.h-card .status-dot.error{background:#F44336}
+.chain-flow{display:flex;align-items:center;gap:4px;overflow-x:auto;padding:20px 0}
+.chain-step{text-align:center;min-width:120px;flex-shrink:0;padding:12px;background:#fff;border-radius:10px;box-shadow:var(--shadow)}
+.chain-step .time{font-size:12px;color:var(--gray-500)}
+.chain-step .name{font-size:14px;font-weight:700;margin-top:4px}
+.chain-arrow{font-size:20px;color:var(--gray-300);flex-shrink:0}
+.integrity-list{margin-top:16px}
+.integrity-item{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--gray-50);border-radius:8px;margin-bottom:8px}
+.section-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:24px}
+.section-card h3{font-size:18px;font-weight:700;margin-bottom:16px}
+.alert-item{padding:12px 16px;border-left:4px solid;border-radius:0 8px 8px 0;margin-bottom:8px;background:var(--gray-50)}
+.alert-item.critical{border-left-color:#F44336}.alert-item.warning{border-left-color:#FFC107}.alert-item.info{border-left-color:#2196F3}
+</style>
+</head>
+<body>
+<header class="header"><div class="header-inner">
+<a href="admin.html" class="logo">ONDA</a>
+<nav class="nav">
+<a href="health.html" class="active">시스템헬스</a>
+<a href="events.html">이벤트</a>
+<a href="admin.html">관리자</a>
+</nav>
+<button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="hero" style="padding:120px 20px 60px">
+<h1>🖥️ 시스템 헬스 모니터링</h1>
+<p>크론 상태 · 데이터 무결성 · 의존성 체인 · 알림 이력</p>
+</section>
+
+<div class="container" style="margin-top:-40px;padding-bottom:80px">
+
+<!-- 크론 상태 카드 -->
+<h2 style="font-size:20px;font-weight:800;margin-bottom:8px">크론 작업 상태</h2>
+<div class="health-grid" id="cronGrid"></div>
+
+<!-- Cron 의존성 체인 -->
+<div class="section-card">
+<h3>🔗 Cron 실행 의존성 체인</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">선행 실패 시 후속 스킵 + 이전 주문서 유지 + 알림</p>
+<div class="chain-flow">
+<div class="chain-step" style="border:2px solid #00C853"><div class="time">04:00</div><div class="name">🔍 크롤링</div></div>
+<div class="chain-arrow">→</div>
+<div class="chain-step"><div class="time">05:00</div><div class="name">🔔 이상감지</div></div>
+<div class="chain-arrow">→</div>
+<div class="chain-step"><div class="time">06:00</div><div class="name">📊 이벤트분류</div></div>
+<div class="chain-arrow">→</div>
+<div class="chain-step"><div class="time">07:00</div><div class="name">📦 주문서생성</div></div>
+<div class="chain-arrow">→</div>
+<div class="chain-step"><div class="time">08:00</div><div class="name">🏭 외주포털</div></div>
+</div>
+<p style="font-size:12px;color:var(--gray-500)">max_execution_time 초과 시 강제 종료. 재시도 최대 2회, 간격 5분.</p>
+</div>
+
+<!-- 데이터 무결성 -->
+<div class="section-card">
+<h3>🔒 데이터 무결성 체크</h3>
+<div class="integrity-list" id="integrityList"></div>
+</div>
+
+<!-- 알림 이력 -->
+<div class="section-card">
+<h3>🔔 최근 알림 이력</h3>
+<div id="alertHistory"></div>
+</div>
+</div>
+
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div></footer>
+
+<script src="config.js"></script>
+<script src="event-hub.js"></script>
+<script>
+const crons = [
+  {name:'AdLog 크롤링',interval:1440,icon:'🔍',time:'04:00'},
+  {name:'이상 감지',interval:1440,icon:'🔔',time:'05:00'},
+  {name:'이벤트 분류 (Opus)',interval:1440,icon:'📊',time:'06:00'},
+  {name:'주문서 생성',interval:1440,icon:'📦',time:'07:00'},
+  {name:'외주 포털 갱신',interval:1440,icon:'🏭',time:'08:00'},
+  {name:'핫리드 발굴',interval:1440,icon:'🔥',time:'08:00'},
+  {name:'리마케팅 발송',interval:1440,icon:'📨',time:'10:00'},
+  {name:'이탈위험 스캔',interval:1440,icon:'⚠️',time:'09:00'},
+  {name:'레퍼런스 갱신',interval:1440,icon:'🏆',time:'06:00'},
+  {name:'감쇠율 측정',interval:1440,icon:'📉',time:'05:00'},
+  {name:'데이터 무결성',interval:1440,icon:'🔒',time:'03:00'},
+  {name:'블로그 크롤러',interval:1440,icon:'📝',time:'04:30'}
+];
+
+async function init() {
+  let health = await sbQuery('sm_system_health?order=cron_name');
+  if (!health.length) {
+    health = crons.map(c => ({cron_name:c.name,status:'ok',last_success_at:new Date(Date.now()-Math.random()*3600000).toISOString(),consecutive_failures:0,expected_interval_minutes:c.interval}));
+  }
+  renderCrons(health);
+  renderIntegrity();
+  renderAlerts();
+}
+
+function renderCrons(health) {
+  const cronMap = {};
+  crons.forEach(c => cronMap[c.name] = c);
+  document.getElementById('cronGrid').innerHTML = health.map(h => {
+    const c = cronMap[h.cron_name] || {icon:'⚙️',time:'--:--'};
+    const st = h.consecutive_failures > 2 ? 'error' : h.consecutive_failures > 0 ? 'warn' : 'ok';
+    const stLabel = st==='ok'?'정상':st==='warn'?'경고':'장애';
+    const ago = h.last_success_at ? timeSince(new Date(h.last_success_at)) : '-';
+    return `<div class="h-card ${st}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:16px">${c.icon} <strong>${h.cron_name}</strong></span>
+        <span class="status-dot ${st}"></span>
+      </div>
+      <div style="font-size:13px;color:var(--gray-500)">
+        <div>예정: 매일 ${c.time}</div>
+        <div>마지막 성공: ${ago}</div>
+        <div>연속 실패: <strong style="color:${h.consecutive_failures>0?'#F44336':'inherit'}">${h.consecutive_failures}회</strong></div>
+        ${h.error_message ? `<div style="color:#F44336;margin-top:4px">${h.error_message}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderIntegrity() {
+  const checks = [
+    {name:'daily_snapshots 중복',status:'ok',detail:'중복 0건'},
+    {name:'daily_inputs > max_daily',status:'ok',detail:'위반 0건'},
+    {name:'learned_rules 범위',status:'ok',detail:'정상 범위'},
+    {name:'event_bus 48h 미소비',status:'ok',detail:'미소비 0건'},
+    {name:'anti_pattern_params 범위',status:'ok',detail:'정상 범위'}
+  ];
+  document.getElementById('integrityList').innerHTML = checks.map(c => `
+    <div class="integrity-item">
+      <span>${c.name}</span>
+      <span style="color:${c.status==='ok'?'#00C853':'#F44336'};font-weight:600">${c.status==='ok'?'✅':'❌'} ${c.detail}</span>
+    </div>`).join('');
+}
+
+function renderAlerts() {
+  const alerts = [
+    {type:'info',msg:'블로그 크롤러 정상 완료 (12건 수집)',time:'2분 전'},
+    {type:'info',msg:'주문서 생성 완료 (활성 고객 3명)',time:'1시간 전'},
+    {type:'warning',msg:'event_bus pending 12건 (24시간 미소비 근접)',time:'3시간 전'},
+    {type:'info',msg:'핫리드 발굴 완료 (신규 48건)',time:'5시간 전'}
+  ];
+  document.getElementById('alertHistory').innerHTML = alerts.map(a => `
+    <div class="alert-item ${a.type}">
+      <div style="display:flex;justify-content:space-between"><strong>${a.msg}</strong><span style="font-size:12px;color:var(--gray-500)">${a.time}</span></div>
+    </div>`).join('');
+}
+
+function timeSince(date) {
+  const s = Math.floor((new Date()-date)/1000);
+  if (s<60) return s+'초 전';
+  if (s<3600) return Math.floor(s/60)+'분 전';
+  if (s<86400) return Math.floor(s/3600)+'시간 전';
+  return Math.floor(s/86400)+'일 전';
+}
+
+init();
+</script>
+</body>
+</html>

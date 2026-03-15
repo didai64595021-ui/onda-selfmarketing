@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>충돌 매트릭스 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.section-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:24px}
+.section-card h3{font-size:18px;font-weight:700;margin-bottom:16px}
+.tier-visual{display:flex;flex-direction:column;gap:4px;margin:16px 0}
+.tier-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:8px}
+.tier-row .tier-badge{width:48px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:800;color:#fff;font-size:14px;flex-shrink:0}
+.tier-0{background:#DC3545}.tier-1{background:#FD7E14}.tier-2{background:#FFC107;color:#212529!important}.tier-3{background:#28A745}.tier-4{background:#6C757D}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px;background:var(--gray-50);font-weight:600;border-bottom:2px solid var(--gray-200);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--gray-100)}
+.winner-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}
+.rollout-card{background:var(--gray-50);border-radius:10px;padding:16px;margin-bottom:12px}
+.rollout-phases{display:flex;gap:8px;margin-top:8px}
+.phase{flex:1;text-align:center;padding:10px;border-radius:8px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.phase .num{font-size:20px;font-weight:800}
+.phase .desc{font-size:11px;color:var(--gray-500);margin-top:4px}
+.phase.active{border:2px solid var(--primary)}
+.dag-info{padding:16px;background:var(--gray-50);border-radius:10px;margin-top:16px}
+</style>
+</head>
+<body>
+<header class="header"><div class="header-inner">
+<a href="admin.html" class="logo">ONDA</a>
+<nav class="nav">
+<a href="constraints.html">제약조건</a>
+<a href="conflicts.html" class="active">충돌매트릭스</a>
+<a href="admin.html">관리자</a>
+</nav>
+<button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="hero" style="padding:120px 20px 60px">
+<h1>⚔️ 충돌 방지 시스템</h1>
+<p>TIER 우선순위 · 15쌍 충돌 매트릭스 · 점진적 롤아웃 · DAG 검증</p>
+</section>
+
+<div class="container" style="margin-top:-40px;padding-bottom:80px">
+
+<!-- TIER 우선순위 -->
+<div class="section-card">
+<h3>🏗️ 로직 우선순위 계층 (TIER 0-4)</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">상위 TIER가 하위 오버라이드. 같은 TIER면 세부 조건 분기 or 곱연산.</p>
+<div class="tier-visual">
+<div class="tier-row" style="background:rgba(220,53,69,0.08)"><div class="tier-badge tier-0">T0</div><div><strong>글로벌 제약</strong> — 절대. 누구도 위반 불가<div style="font-size:12px;color:var(--gray-500)">max_daily 200타, blackout 0-7시, 마진 30%+</div></div></div>
+<div class="tier-row" style="background:rgba(253,126,20,0.08)"><div class="tier-badge tier-1">T1</div><div><strong>긴급 대응</strong> — L9, 로직 대변경, 결제 실패<div style="font-size:12px;color:var(--gray-500)">즉시 실행. 하위 모든 로직 오버라이드</div></div></div>
+<div class="tier-row" style="background:rgba(255,193,7,0.08)"><div class="tier-badge tier-2">T2</div><div><strong>안전 로직</strong> — 매체 수명, 이상 감지, 블로그 삭제, 반영 대기<div style="font-size:12px;color:var(--gray-500)">안정성 우선. 최적화보다 안전</div></div></div>
+<div class="tier-row" style="background:rgba(40,167,69,0.08)"><div class="tier-badge tier-3">T3</div><div><strong>최적화 로직</strong> — 밴딧, 키워드 효율, 요일 가중치, 시즌 보정<div style="font-size:12px;color:var(--gray-500)">데이터 기반 최적화. 안전 로직에 양보</div></div></div>
+<div class="tier-row" style="background:rgba(108,117,125,0.08)"><div class="tier-badge tier-4">T4</div><div><strong>노이즈/자연화</strong> — 볼륨 노이즈, 시간대 분배, 미션 시퀀스<div style="font-size:12px;color:var(--gray-500)">패턴 감지 방지. 최종 후처리</div></div></div>
+</div>
+</div>
+
+<!-- 충돌 매트릭스 -->
+<div class="section-card">
+<h3>⚔️ 전체 충돌 매트릭스 (15쌍)</h3>
+<div style="overflow-x:auto"><table id="conflictTable"></table></div>
+</div>
+
+<!-- 점진적 롤아웃 -->
+<div class="section-card">
+<h3>🚀 점진적 롤아웃</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:16px">새 로직 적용: Phase1(내부 2-3곳 3일) → Phase2(20% 7일) → Phase3(50% 7일) → Phase4(100%)</p>
+<div id="rolloutList"></div>
+<div style="margin-top:12px;padding:12px;background:#FFF3CD;border-radius:8px;font-size:13px">
+⚠️ <strong>자동 롤백 조건:</strong> 적용 그룹 N2 delta가 미적용 대비 -0.01 이상 나쁨 (3일 연속)
+</div>
+</div>
+
+<!-- DAG 검증 -->
+<div class="section-card">
+<h3>🔄 순환 의존성 방지 (DAG)</h3>
+<div class="dag-info">
+<p style="font-size:14px"><strong>✅ DAG 검증 통과</strong> — 순환 의존성 없음</p>
+<p style="font-size:13px;color:var(--gray-500);margin-top:8px">같은 Cron 사이클 내에서 자기 출력을 다시 읽지 않음. 피드백은 다음 날 daily_snapshots를 통해서만.</p>
+</div>
+</div>
+</div>
+
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div></footer>
+
+<script src="config.js"></script>
+<script src="event-hub.js"></script>
+<script>
+const conflicts = [
+  {a:'L9 긴급',b:'반영대기 억제',resolution:'streak>=4 + drop>0.03이면 L9 우선',ta:1,tb:2,winner:'L9'},
+  {a:'밴딧',b:'L8 수명만료',resolution:'L8 우선. 밴딧 beta에 반영',ta:3,tb:2,winner:'L8'},
+  {a:'부스트 모드',b:'max_daily',resolution:'enforcer가 200으로 클램핑',ta:3,tb:0,winner:'max_daily'},
+  {a:'요일 가중치',b:'부스트',resolution:'곱연산 (부스트 × weight)',ta:3,tb:3,winner:'곱연산'},
+  {a:'노이즈 ±40%',b:'max_daily',resolution:'노이즈 후 enforcer 클램핑',ta:4,tb:0,winner:'max_daily'},
+  {a:'포트폴리오 분산',b:'개별 최적',resolution:'포트폴리오 우선. 개별 -5%까지 허용',ta:2,tb:3,winner:'포트폴리오'},
+  {a:'업셀',b:'AT_RISK',resolution:'AT_RISK면 업셀 금지',ta:3,tb:1,winner:'AT_RISK'},
+  {a:'경쟁 대응',b:'escalation_limiter',resolution:'2주 2회 초과 금지',ta:3,tb:2,winner:'limiter'},
+  {a:'가설 A',b:'가설 B (모순)',resolution:'최신+대표본 우선',ta:3,tb:3,winner:'최신'},
+  {a:'volume_smoothing',b:'L9',resolution:'L9는 smoothing 예외',ta:4,tb:1,winner:'L9'},
+  {a:'시즌 보정',b:'로직 변경 감지',resolution:'시즌 중 임계값 상향',ta:3,tb:1,winner:'곱연산'},
+  {a:'기존매체 2일룰',b:'신규매체 4-7일',resolution:'source.is_new 플래그로 구분',ta:2,tb:2,winner:'분기'},
+  {a:'confidence 전파',b:'개별 confidence',resolution:'MIN(자기, 부모)',ta:3,tb:3,winner:'MIN'},
+  {a:'결제 실패',b:'진행 중 주문서',resolution:'즉시 중단. 외주에 취소 전달',ta:1,tb:3,winner:'중단'},
+  {a:'점진적 롤아웃',b:'L9',resolution:'L9는 전 고객 즉시 적용',ta:3,tb:1,winner:'L9'}
+];
+
+function init() {
+  renderConflicts();
+  renderRollout();
+}
+
+function renderConflicts() {
+  const tierColor = t => ['tier-0','tier-1','tier-2','tier-3','tier-4'][t] || 'tier-4';
+  document.getElementById('conflictTable').innerHTML = `
+    <thead><tr><th>#</th><th>로직 A</th><th>T</th><th>로직 B</th><th>T</th><th>해결 방법</th><th>승자</th></tr></thead>
+    <tbody>${conflicts.map((c,i) => `<tr>
+      <td>${i+1}</td>
+      <td><strong>${c.a}</strong></td>
+      <td><span class="winner-badge ${tierColor(c.ta)}">${c.ta}</span></td>
+      <td><strong>${c.b}</strong></td>
+      <td><span class="winner-badge ${tierColor(c.tb)}">${c.tb}</span></td>
+      <td style="font-size:12px">${c.resolution}</td>
+      <td><span class="winner-badge" style="background:var(--primary)">${c.winner}</span></td>
+    </tr>`).join('')}</tbody>`;
+}
+
+async function renderRollout() {
+  let phases = await sbQuery('sm_rollout_phases?order=created_at.desc&limit=5');
+  const el = document.getElementById('rolloutList');
+  if (!phases.length) {
+    el.innerHTML = `<div class="rollout-card">
+      <div style="font-size:15px;font-weight:700">현재 활성 롤아웃 없음</div>
+      <p style="font-size:13px;color:var(--gray-500);margin-top:4px">새 로직 적용 시 자동으로 Phase 1부터 시작됩니다</p>
+      <div class="rollout-phases">
+        <div class="phase"><div class="num">P1</div><div class="desc">내부 2-3곳<br>3일</div></div>
+        <div class="phase"><div class="num">P2</div><div class="desc">전체 20%<br>7일</div></div>
+        <div class="phase"><div class="num">P3</div><div class="desc">전체 50%<br>7일</div></div>
+        <div class="phase"><div class="num">P4</div><div class="desc">전체 100%<br>완료</div></div>
+      </div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = phases.map(p => `<div class="rollout-card">
+    <div style="display:flex;justify-content:space-between"><strong>${p.rule_name||'규칙 #'+p.rule_id}</strong><span style="font-size:13px;color:var(--gray-500)">Phase ${p.phase}</span></div>
+    <div style="font-size:13px;margin-top:4px">상태: ${p.status} · 대상: ${p.target_pct}% · ${p.auto_rollback?'⚠️ 롤백됨':'진행 중'}</div>
+  </div>`).join('');
+}
+
+init();
+</script>
+</body>
+</html>

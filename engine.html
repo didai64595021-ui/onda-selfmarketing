@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안티패턴 엔진 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.engine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+@media(max-width:1024px){.engine-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.engine-grid{grid-template-columns:1fr}}
+.layer-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-left:4px solid var(--primary)}
+.layer-card.tier-0{border-left-color:#DC3545}.layer-card.tier-1{border-left-color:#FD7E14}
+.layer-card.tier-2{border-left-color:#FFC107}.layer-card.tier-3{border-left-color:#28A745}.layer-card.tier-4{border-left-color:#6C757D}
+.layer-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.layer-id{font-size:13px;font-weight:800;color:var(--primary);background:rgba(0,102,255,0.1);padding:2px 10px;border-radius:12px}
+.toggle-sm{position:relative;width:36px;height:20px;cursor:pointer}
+.toggle-sm input{display:none}
+.toggle-sm .sl{position:absolute;inset:0;background:var(--gray-200);border-radius:10px;transition:0.3s}
+.toggle-sm .sl::before{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;left:3px;top:3px;transition:0.3s}
+.toggle-sm input:checked+.sl{background:var(--accent)}
+.toggle-sm input:checked+.sl::before{transform:translateX(16px)}
+.param-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--gray-500)}
+.param-row strong{color:var(--gray-900)}
+.section-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:24px}
+.section-card h3{font-size:18px;font-weight:700;margin-bottom:16px}
+.tree-node{padding:8px 16px;margin:4px 0 4px 24px;border-left:2px solid var(--gray-200);position:relative}
+.tree-node::before{content:'';position:absolute;left:-2px;top:16px;width:12px;height:2px;background:var(--gray-200)}
+.tree-node.root{margin-left:0;border-left:none;font-weight:800;font-size:16px}
+.tree-node.root::before{display:none}
+.conf-low{color:#DC3545;font-weight:700}.conf-med{color:#FFC107;font-weight:700}.conf-high{color:#28A745;font-weight:700}
+.portfolio-bar{display:flex;height:32px;border-radius:8px;overflow:hidden;margin-bottom:8px}
+.portfolio-bar div{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;transition:width 0.6s}
+.feedback-loop{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+@media(max-width:768px){.feedback-loop{grid-template-columns:1fr}}
+.loop-card{padding:16px;background:var(--gray-50);border-radius:10px}
+.loop-card h4{font-size:14px;font-weight:700;margin-bottom:6px}
+.loop-card p{font-size:13px;color:var(--gray-500)}
+.param-edit{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+@media(max-width:768px){.param-edit{grid-template-columns:1fr}}
+.param-input{display:flex;flex-direction:column;gap:4px}
+.param-input label{font-size:12px;font-weight:600;color:var(--gray-500)}
+.param-input input{padding:8px 12px;border:2px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit}
+</style>
+</head>
+<body>
+<header class="header"><div class="header-inner">
+<a href="admin.html" class="logo">ONDA</a>
+<nav class="nav">
+<a href="engine.html" class="active">안티패턴</a>
+<a href="blog-intel.html">블로그인텔</a>
+<a href="constraints.html">제약조건</a>
+<a href="admin.html">관리자</a>
+</nav>
+<button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="hero" style="padding:120px 20px 60px">
+<h1>🧠 안티패턴 엔진 v2</h1>
+<p>9 기본 레이어 + A(투입최적화) + B(학습/판단) 확장</p>
+</section>
+
+<div class="container" style="margin-top:-40px;padding-bottom:80px">
+
+<!-- L1-L9 기본 레이어 -->
+<h2 style="font-size:20px;font-weight:800;margin-bottom:4px">기본 9 레이어</h2>
+<p style="color:var(--gray-500);font-size:14px;margin-bottom:8px">주문서 생성 시 순차 적용. 상위 TIER가 하위 오버라이드.</p>
+<div class="engine-grid" id="layerGrid"></div>
+
+<!-- A 레이어: 투입 최적화 -->
+<div class="section-card">
+<h3>🔧 A 레이어: 투입 최적화 확장</h3>
+<div class="engine-grid" style="margin-top:12px">
+<div class="layer-card tier-4">
+<div class="layer-header"><span class="layer-id">A-1</span><span style="font-size:13px;color:var(--gray-500)">Rate Limiter</span></div>
+<p style="font-size:14px;font-weight:600;margin-bottom:8px">분당 속도 제어</p>
+<div class="param-row"><span>유입</span><strong>60-180초 간격</strong></div>
+<div class="param-row"><span>길찾기</span><strong>120-300초 간격</strong></div>
+<div class="param-row"><span>저장</span><strong>90-240초 간격</strong></div>
+<div class="param-row"><span>전화</span><strong>180-600초 간격</strong></div>
+<div class="param-row"><span>10분 동일미션 MAX</span><strong>5건</strong></div>
+</div>
+<div class="layer-card tier-4">
+<div class="layer-header"><span class="layer-id">A-2</span><span style="font-size:13px;color:var(--gray-500)">미션 시퀀스</span></div>
+<p style="font-size:14px;font-weight:600;margin-bottom:8px">자연화 패턴</p>
+<div class="param-row"><span>패턴 A</span><strong>유입→저장</strong></div>
+<div class="param-row"><span>패턴 B</span><strong>유입→길찾기</strong></div>
+<div class="param-row"><span>패턴 C</span><strong>유입→메뉴/사진→전화</strong></div>
+<div class="param-row"><span>패턴 D</span><strong>유입→저장→(익일)길찾기</strong></div>
+<div class="param-row"><span>연속 동일미션 MAX</span><strong>3건</strong></div>
+</div>
+<div class="layer-card tier-4">
+<div class="layer-header"><span class="layer-id">A-3</span><span style="font-size:13px;color:var(--gray-500)">디바이스/OS</span></div>
+<p style="font-size:14px;font-weight:600;margin-bottom:8px">분산 가이드라인</p>
+<div class="param-row"><span>Android</span><strong>55-65%</strong></div>
+<div class="param-row"><span>iOS</span><strong>30-40%</strong></div>
+<div class="param-row"><span>PC</span><strong>5-10%</strong></div>
+<div class="param-row"><span>매체 리더보드</span><strong>준수 여부 항목</strong></div>
+</div>
+</div>
+</div>
+
+<!-- B 레이어: 학습/판단 -->
+<div class="section-card">
+<h3>🎯 B 레이어: 학습/판단 확장</h3>
+
+<!-- B-1 밴딧 -->
+<h4 style="margin-top:16px;font-size:15px;font-weight:700">B-1. 멀티암드 밴딧 매체 선택</h4>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">Thompson Sampling Beta(α,β) · 최소 10% exploration 보장</p>
+<div id="banditTable" style="overflow-x:auto"></div>
+
+<!-- B-2 Confidence 전파 -->
+<h4 style="margin-top:24px;font-size:15px;font-weight:700">B-2. Confidence 전파 트리</h4>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">자식 confidence = MIN(자기, 부모). 빨간=low, 노란=medium, 초록=high</p>
+<div id="confTree"></div>
+
+<!-- B-3 피드백 루프 -->
+<h4 style="margin-top:24px;font-size:15px;font-weight:700">B-3. 피드백 루프 안정성 (발진 방지)</h4>
+<div class="feedback-loop">
+<div class="loop-card"><h4>루프 1: 매체 전환 발진</h4><p>전환 후 7일 쿨다운 기간 L9 억제</p></div>
+<div class="loop-card"><h4>루프 2: 투입량 진동</h4><p>일 변동 MAX 20타. 7일에 걸쳐 점진 적용. L9 예외</p></div>
+<div class="loop-card"><h4>루프 3: 가설 적용 후</h4><p>30일 관찰 기간. 해당 가설 재검증 미사용. 30일 후 재검증</p></div>
+<div class="loop-card"><h4>루프 4: 경쟁사 에스컬레이션</h4><p>동일 키워드 2주 내 투입 증가 2회 금지. 무한 비용 전쟁 방지</p></div>
+</div>
+
+<!-- B-4 adaptive threshold -->
+<h4 style="margin-top:24px;font-size:15px;font-weight:700">B-4. 이상 탐지 적응형 임계값</h4>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px">
+<div style="padding:16px;background:var(--gray-50);border-radius:10px;text-align:center">
+<div style="font-size:24px;font-weight:800;color:var(--primary)" id="thresholdVal">0.030</div>
+<div style="font-size:12px;color:var(--gray-500)">현재 임계값</div>
+</div>
+<div style="padding:16px;background:var(--gray-50);border-radius:10px;text-align:center">
+<div style="font-size:24px;font-weight:800" id="thresholdMode">안정기</div>
+<div style="font-size:12px;color:var(--gray-500)">모드</div>
+</div>
+<div style="padding:16px;background:var(--gray-50);border-radius:10px;text-align:center">
+<div style="font-size:24px;font-weight:800;color:var(--accent)">95th</div>
+<div style="font-size:12px;color:var(--gray-500)">percentile 기반</div>
+</div>
+</div>
+</div>
+
+<!-- 포트폴리오 리밸런싱 -->
+<div class="section-card">
+<h3>📊 포트폴리오 리밸런싱</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:16px">전체 관리업체 매체 배분 현황. 단일 매체 45% 초과 시 자동 분산.</p>
+<div id="portfolioChart"></div>
+</div>
+
+<!-- 파라미터 편집 -->
+<div class="section-card">
+<h3>⚙️ 엔진 파라미터 편집</h3>
+<div class="param-edit" id="paramEdit"></div>
+<button class="btn btn-primary" style="margin-top:16px" onclick="saveParams()">저장</button>
+</div>
+</div>
+
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div></footer>
+
+<script src="config.js"></script>
+<script src="event-hub.js"></script>
+<script>
+const layers = [
+  {id:'L1',name:'일별 총량 변동',param:'기본 건수 ±40% 가우시안 노이즈',tier:4,on:true},
+  {id:'L2',name:'시간대 분배',param:'피크 12-13/18-20시. 새벽 0건. 10타 단위',tier:4,on:true},
+  {id:'L3',name:'미션 유형 믹스',param:'길찾기 0%. 유입 54% + 기타 46%',tier:4,on:true},
+  {id:'L4',name:'매체 비율 변동',param:'3개 매체, 3일 연속 동일 비율 금지',tier:3,on:true},
+  {id:'L5',name:'키워드 로테이션',param:'풀 100-200개 중 매일 30개 선택',tier:3,on:true},
+  {id:'L6',name:'패턴 사이클 파괴',param:'3일 이동평균 일정 시 강제 변동',tier:4,on:true},
+  {id:'L7',name:'투입량 곡선 파괴',param:'연속 휴식 MAX 2일, 연속 투입 MAX 7일',tier:4,on:true},
+  {id:'L8',name:'매체 수명 관리',param:'기존: 2일룰 / 신규: 4-7일 / 쿨다운 5일',tier:2,on:true},
+  {id:'L9',name:'N2 하락 긴급 전환',param:'business_n2 4일 연속 하락. A/B/C 세분화',tier:1,on:true}
+];
+
+function init() {
+  renderLayers();
+  renderBandit();
+  renderConfTree();
+  renderPortfolio();
+  renderParams();
+}
+
+function renderLayers() {
+  document.getElementById('layerGrid').innerHTML = layers.map(l => `
+    <div class="layer-card tier-${l.tier}">
+      <div class="layer-header">
+        <span class="layer-id">${l.id}</span>
+        <label class="toggle-sm"><input type="checkbox" ${l.on?'checked':''} data-layer="${l.id}"><span class="sl"></span></label>
+      </div>
+      <p style="font-size:14px;font-weight:600;margin-bottom:6px">${l.name}</p>
+      <p style="font-size:12px;color:var(--gray-500)">${l.param}</p>
+      <div style="margin-top:8px;font-size:11px;color:var(--gray-500)">TIER ${l.tier}</div>
+    </div>`).join('');
+}
+
+async function renderBandit() {
+  let betas = await sbQuery('sm_source_beta_params?order=alpha.desc');
+  if (!betas.length) betas = [
+    {source_name:'뭉치',alpha:12,beta:3,decay_factor:0.95},
+    {source_name:'퍼플페퍼',alpha:9,beta:4,decay_factor:0.95},
+    {source_name:'말차',alpha:7,beta:5,decay_factor:0.95},
+    {source_name:'블루',alpha:4,beta:6,decay_factor:0.95}
+  ];
+  document.getElementById('banditTable').innerHTML = `<table><thead><tr><th>매체</th><th>α(성공)</th><th>β(실패)</th><th>기대값</th><th>Decay</th><th>배분 추정</th></tr></thead><tbody>${
+    betas.map(b => {
+      const ev = (b.alpha/(b.alpha+b.beta)*100).toFixed(1);
+      return `<tr><td><strong>${b.source_name}</strong></td><td>${b.alpha}</td><td>${b.beta}</td><td>${ev}%</td><td>${b.decay_factor}</td>
+      <td><div style="width:100%;background:var(--gray-100);height:16px;border-radius:8px;overflow:hidden"><div style="width:${ev}%;background:var(--primary);height:100%;border-radius:8px"></div></div></td></tr>`;
+    }).join('')
+  }</tbody></table>`;
+}
+
+async function renderConfTree() {
+  let nodes = await sbQuery('sm_confidence_tree?order=id');
+  if (!nodes.length) nodes = [
+    {variable_name:'N2_model (플레이스 레벨)',parent_variable:null,confidence_level:'low',evidence_count:54},
+    {variable_name:'daily_volume (일일 투입량)',parent_variable:'N2_model (플레이스 레벨)',confidence_level:'low',evidence_count:54},
+    {variable_name:'mission_mix (미션 믹스)',parent_variable:'N2_model (플레이스 레벨)',confidence_level:'low',evidence_count:54},
+    {variable_name:'source_lifetime (매체 수명)',parent_variable:'N2_model (플레이스 레벨)',confidence_level:'low',evidence_count:12},
+    {variable_name:'day_weight (요일 가중치)',parent_variable:'daily_volume (일일 투입량)',confidence_level:'low',evidence_count:54},
+    {variable_name:'keyword_efficiency (키워드 효율)',parent_variable:'N2_model (플레이스 레벨)',confidence_level:'low',evidence_count:0},
+    {variable_name:'blog_compound (블로그 복합효과)',parent_variable:'N2_model (플레이스 레벨)',confidence_level:'low',evidence_count:0}
+  ];
+  const confClass = l => l==='high'?'conf-high':l==='medium'?'conf-med':'conf-low';
+  const roots = nodes.filter(n => !n.parent_variable);
+  let html = '';
+  function renderNode(node, depth) {
+    html += `<div class="tree-node${depth===0?' root':''}" style="margin-left:${depth*24}px">
+      <span class="${confClass(node.confidence_level)}">[${node.confidence_level.toUpperCase()}]</span> ${node.variable_name}
+      <span style="font-size:12px;color:var(--gray-500);margin-left:8px">n=${node.evidence_count}</span>
+    </div>`;
+    nodes.filter(n => n.parent_variable === node.variable_name).forEach(child => renderNode(child, depth+1));
+  }
+  roots.forEach(r => renderNode(r, 0));
+  document.getElementById('confTree').innerHTML = html;
+}
+
+function renderPortfolio() {
+  const sources = [
+    {name:'뭉치',pct:35,color:'#2196F3'},
+    {name:'퍼플페퍼',pct:28,color:'#FF9800'},
+    {name:'말차',pct:22,color:'#4CAF50'},
+    {name:'블루',pct:10,color:'#9C27B0'},
+    {name:'기타',pct:5,color:'#607D8B'}
+  ];
+  const warn = sources.some(s => s.pct > 45);
+  document.getElementById('portfolioChart').innerHTML = `
+    ${warn ? '<div style="padding:10px 16px;background:#FFF3CD;border-radius:8px;margin-bottom:12px;font-size:13px">⚠️ 단일 매체 45% 초과! 자동 분산 필요</div>' : ''}
+    <div class="portfolio-bar">${sources.map(s => `<div style="width:${s.pct}%;background:${s.color}">${s.name} ${s.pct}%</div>`).join('')}</div>
+    <div style="font-size:12px;color:var(--gray-500)">전체 관리업체 기준 매체별 투입량 점유율</div>`;
+}
+
+async function renderParams() {
+  let params = await sbQuery('sm_anti_pattern_params?order=category,param_key');
+  if (!params.length) params = [
+    {param_key:'RECOMMENDED_DAILY_VOLUME',param_value:150,min_value:100,max_value:200,category:'volume',description:'일일 권장 투입량'},
+    {param_key:'MAX_DAILY_VOLUME',param_value:200,min_value:150,max_value:300,category:'volume',description:'일일 최대 투입량'},
+    {param_key:'NOISE_STDDEV',param_value:0.4,min_value:0.1,max_value:0.6,category:'noise',description:'볼륨 노이즈 표준편차 (±40%)'},
+    {param_key:'DIRECTION_PCT',param_value:0,min_value:0,max_value:30,category:'mission',description:'길찾기 비율 (%)'},
+    {param_key:'INFLOW_PCT',param_value:54,min_value:30,max_value:80,category:'mission',description:'유입 비율 (%)'},
+    {param_key:'SOURCE_COOLDOWN',param_value:5,min_value:3,max_value:14,category:'source',description:'매체 쿨다운 최소일'},
+    {param_key:'L9_STREAK_DAYS',param_value:4,min_value:3,max_value:7,category:'trigger',description:'L9 트리거 연속 하락일'},
+    {param_key:'VOLUME_SMOOTH_MAX',param_value:20,min_value:10,max_value:50,category:'stability',description:'일 변동 MAX 타수'}
+  ];
+  document.getElementById('paramEdit').innerHTML = params.map(p => `
+    <div class="param-input">
+      <label>${p.description} (${p.param_key})</label>
+      <input type="number" value="${p.param_value}" data-key="${p.param_key}" min="${p.min_value||''}" max="${p.max_value||''}" step="any">
+      <span style="font-size:11px;color:var(--gray-500)">범위: ${p.min_value??'-'} ~ ${p.max_value??'-'} | ${p.category}</span>
+    </div>`).join('');
+}
+
+async function saveParams() {
+  const inputs = document.querySelectorAll('.param-input input');
+  for (const inp of inputs) {
+    const existing = await sbQuery(`sm_anti_pattern_params?param_key=eq.${inp.dataset.key}`);
+    if (existing.length) {
+      await sbUpdate('sm_anti_pattern_params', {param_key: inp.dataset.key}, {param_value: parseFloat(inp.value), updated_at: new Date().toISOString()});
+    } else {
+      await sbInsert('sm_anti_pattern_params', {param_key: inp.dataset.key, param_value: parseFloat(inp.value)});
+    }
+  }
+  alert('파라미터 저장 완료!');
+}
+
+init();
+</script>
+</body>
+</html>

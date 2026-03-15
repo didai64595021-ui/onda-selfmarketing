@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>감쇠 프로필 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.decay-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+@media(max-width:768px){.decay-grid{grid-template-columns:1fr}}
+.d-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+.d-card h3{font-size:18px;font-weight:700;margin-bottom:16px}
+.curve-chart{position:relative;height:200px;border-left:2px solid var(--gray-200);border-bottom:2px solid var(--gray-200);margin:16px 0}
+.curve-point{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%)}
+.curve-line{position:absolute;height:2px;transform-origin:left center}
+.curve-label{position:absolute;font-size:11px;color:var(--gray-500);transform:translateX(-50%)}
+.decay-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.decay-stat{text-align:center;padding:16px;background:var(--gray-50);border-radius:10px}
+.decay-stat .val{font-size:24px;font-weight:800}
+.decay-stat .lbl{font-size:12px;color:var(--gray-500);margin-top:4px}
+.msg-gen{background:var(--gray-50);border-radius:10px;padding:16px;margin-top:16px}
+.msg-gen p{font-size:14px;line-height:1.7}
+.msg-gen .tag{display:inline-block;background:var(--primary);color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;margin:0 2px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px;background:var(--gray-50);font-weight:600;border-bottom:2px solid var(--gray-200)}
+td{padding:10px;border-bottom:1px solid var(--gray-100)}
+</style>
+</head>
+<body>
+<header class="header"><div class="header-inner">
+<a href="admin.html" class="logo">ONDA</a>
+<nav class="nav">
+<a href="engine.html">안티패턴</a>
+<a href="decay.html" class="active">감쇠프로필</a>
+<a href="admin.html">관리자</a>
+</nav>
+<button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="hero" style="padding:120px 20px 60px">
+<h1>📉 감쇠 프로필</h1>
+<p>투입 중단 후 N2/순위 감쇠율 측정 · 해지방어 데이터 무기</p>
+</section>
+
+<div class="container" style="margin-top:-40px;padding-bottom:80px">
+
+<!-- 감쇠 곡선 시각화 -->
+<div class="d-card">
+<h3>📈 평균 감쇠 곡선 (전체 업종)</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">투입 중단 후 N2 변동 추적. 해지/미전환/일시중지 고객 30일 사후 추적 기반.</p>
+<div style="display:flex;gap:32px;margin:16px 0;flex-wrap:wrap">
+<div style="display:flex;align-items:flex-end;gap:8px;height:160px;flex:1" id="decayCurve"></div>
+</div>
+<div class="decay-stats">
+<div class="decay-stat"><div class="val" style="color:#F44336">-12%</div><div class="lbl">7일 후 N2 감소</div></div>
+<div class="decay-stat"><div class="val" style="color:#F44336">-28%</div><div class="lbl">14일 후 N2 감소</div></div>
+<div class="decay-stat"><div class="val" style="color:#F44336">-45%</div><div class="lbl">30일 후 N2 감소</div></div>
+</div>
+</div>
+
+<div class="decay-grid">
+<!-- 업종별 감쇠율 -->
+<div class="d-card">
+<h3>🏭 업종별 감쇠율 (7일)</h3>
+<table>
+<thead><tr><th>업종</th><th>Median</th><th>P75</th><th>P90</th><th>표본</th></tr></thead>
+<tbody>
+<tr><td>맛집</td><td style="color:#F44336;font-weight:700">-15%</td><td>-22%</td><td>-35%</td><td>12</td></tr>
+<tr><td>카페</td><td style="color:#F44336;font-weight:700">-10%</td><td>-18%</td><td>-28%</td><td>8</td></tr>
+<tr><td>술집</td><td style="color:#F44336;font-weight:700">-18%</td><td>-25%</td><td>-40%</td><td>5</td></tr>
+<tr><td>미용</td><td style="color:#F44336;font-weight:700">-8%</td><td>-14%</td><td>-22%</td><td>3</td></tr>
+<tr><td>전체(미분류)</td><td style="color:#F44336;font-weight:700">-12%</td><td>-20%</td><td>-32%</td><td>28</td></tr>
+</tbody>
+</table>
+<p style="font-size:12px;color:var(--gray-500);margin-top:8px">⚠️ industry_id 전부 0(미분류). M1-3에 업종 분류 후 정확도 향상</p>
+</div>
+
+<!-- 순위 감쇠 -->
+<div class="d-card">
+<h3>📊 순위 감쇠 (평균)</h3>
+<table>
+<thead><tr><th>기간</th><th>순위 변동</th><th>비율</th></tr></thead>
+<tbody>
+<tr><td>중단 시점</td><td style="font-weight:700">기준 0</td><td>-</td></tr>
+<tr><td>7일 후</td><td style="color:#F44336;font-weight:700">-3.2위</td><td>표본 28건</td></tr>
+<tr><td>14일 후</td><td style="color:#F44336;font-weight:700">-5.8위</td><td>표본 22건</td></tr>
+<tr><td>30일 후</td><td style="color:#F44336;font-weight:700">-8.4위</td><td>표본 15건</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 메시지 자동생성 -->
+<div class="d-card">
+<h3>💬 해지방어 메시지 자동생성</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">감쇠 데이터 기반 설득 메시지</p>
+<div class="msg-gen">
+<p><strong>🛑 해지 방어용:</strong><br>"서비스 중단 시 <span class="tag">7일 내 평균 3위 하락</span>이 발생합니다. 현재 순위를 유지하려면 지속적인 관리가 필요합니다."</p>
+</div>
+<div class="msg-gen" style="margin-top:8px">
+<p><strong>🧪 체험 전환용:</strong><br>"체험 기간 중 올라간 순위는 <span class="tag">2주 내 원래 위치로 복귀</span>합니다. 지금 유료 전환하시면 상승 효과를 유지할 수 있습니다."</p>
+</div>
+<div class="msg-gen" style="margin-top:8px">
+<p><strong>🔄 윈백용 (Stage 4):</strong><br>"해지 후 <span class="tag">30일 경과, 순위 평균 8위 하락</span>했습니다. 재가입 시 부스트 모드로 빠르게 복구해드립니다."</p>
+</div>
+</div>
+
+<!-- 프로필 목록 -->
+<div class="d-card">
+<h3>📋 감쇠 프로필 데이터</h3>
+<div style="overflow-x:auto" id="profileList"></div>
+</div>
+</div>
+</div>
+
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div></footer>
+
+<script src="config.js"></script>
+<script src="event-hub.js"></script>
+<script>
+async function init() {
+  renderDecayCurve();
+  await loadProfiles();
+}
+
+function renderDecayCurve() {
+  const points = [
+    {day:'D0',pct:100},{day:'D3',pct:94},{day:'D7',pct:88},{day:'D10',pct:80},{day:'D14',pct:72},{day:'D21',pct:62},{day:'D30',pct:55}
+  ];
+  const maxH = 150;
+  document.getElementById('decayCurve').innerHTML = points.map(p => {
+    const h = (p.pct/100)*maxH;
+    const color = p.pct > 85 ? '#FFC107' : p.pct > 70 ? '#FF9800' : '#F44336';
+    return `<div style="display:flex;flex-direction:column;align-items:center;flex:1">
+      <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:4px">${p.pct}%</div>
+      <div style="width:100%;height:${h}px;background:${color};border-radius:6px 6px 0 0;min-width:30px"></div>
+      <div style="font-size:11px;color:var(--gray-500);margin-top:4px">${p.day}</div>
+    </div>`;
+  }).join('');
+}
+
+async function loadProfiles() {
+  let profiles = await sbQuery('sm_decay_profile?order=created_at.desc&limit=20');
+  const el = document.getElementById('profileList');
+  if (!profiles.length) {
+    el.innerHTML = '<p style="color:var(--gray-500);text-align:center;padding:20px">아직 감쇠 데이터 없음. 해지/미전환 고객 발생 시 자동 수집됩니다.</p>';
+    return;
+  }
+  el.innerHTML = `<table><thead><tr><th>업체</th><th>중단일</th><th>투입기간</th><th>N2(중단)</th><th>7일후</th><th>14일후</th><th>30일후</th><th>감쇠율(7d)</th></tr></thead><tbody>${
+    profiles.map(p => `<tr><td>${p.business_id||'-'}</td><td>${p.last_input_date||'-'}</td><td>${p.input_duration_days||'-'}일</td>
+    <td>${p.n2_at_stop||'-'}</td><td>${p.n2_after_7d||'-'}</td><td>${p.n2_after_14d||'-'}</td><td>${p.n2_after_30d||'-'}</td>
+    <td style="color:#F44336;font-weight:700">${p.decay_rate_7d ? (p.decay_rate_7d*100).toFixed(1)+'%' : '-'}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+init();
+</script>
+</body>
+</html>

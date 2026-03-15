@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매체 교차효과 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.section-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:24px}
+.section-card h3{font-size:18px;font-weight:700;margin-bottom:16px}
+.matrix-grid{display:grid;gap:2px;margin:16px 0}
+.matrix-cell{padding:12px 8px;text-align:center;font-size:12px;border-radius:4px;font-weight:600}
+.matrix-header{background:var(--gray-50);font-weight:700;font-size:13px}
+.boost-pos{background:rgba(0,200,83,0.15);color:#00C853}.boost-neg{background:rgba(244,67,54,0.15);color:#F44336}.boost-neutral{background:var(--gray-50)}
+.cooldown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+@media(max-width:768px){.cooldown-grid{grid-template-columns:repeat(2,1fr)}}
+.cd-card{text-align:center;padding:16px;background:var(--gray-50);border-radius:10px}
+.cd-card .val{font-size:24px;font-weight:800}
+.cd-card .lbl{font-size:12px;color:var(--gray-500);margin-top:4px}
+.recommend-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--gray-50);border-radius:10px;margin-bottom:8px}
+.recommend-arrow{font-size:20px;color:var(--primary)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px;background:var(--gray-50);font-weight:600;border-bottom:2px solid var(--gray-200)}
+td{padding:10px;border-bottom:1px solid var(--gray-100)}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+@media(max-width:768px){.form-grid{grid-template-columns:1fr}}
+.form-grid label{font-size:12px;font-weight:600;color:var(--gray-500);display:flex;flex-direction:column;gap:4px}
+.form-grid input,.form-grid select{padding:10px;border:2px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit}
+</style>
+</head>
+<body>
+<header class="header"><div class="header-inner">
+<a href="admin.html" class="logo">ONDA</a>
+<nav class="nav">
+<a href="leaderboard.html">리더보드</a>
+<a href="transitions.html" class="active">교차효과</a>
+<a href="admin.html">관리자</a>
+</nav>
+<button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="hero" style="padding:120px 20px 60px">
+<h1>🔀 매체 교차 효과</h1>
+<p>전환 순서별 N2 효과 · 쿨다운 최적화 · 로테이션 추천</p>
+</section>
+
+<div class="container" style="margin-top:-40px;padding-bottom:80px">
+
+<!-- 교차효과 매트릭스 -->
+<div class="section-card">
+<h3>📊 매체 A→B 전환 효과 매트릭스</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">행=이전 매체, 열=다음 매체. 값=전환 후 N2 delta (7일)</p>
+<div id="transMatrix"></div>
+</div>
+
+<!-- 쿨다운 기간별 효과 -->
+<div class="section-card">
+<h3>⏳ 쿨다운 기간별 효과</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">매체 교체 후 쿨다운 기간에 따른 재사용 효과</p>
+<div class="cooldown-grid">
+<div class="cd-card"><div class="val" style="color:#F44336">-0.008</div><div class="lbl">3일 쿨다운</div></div>
+<div class="cd-card"><div class="val" style="color:#FFC107">+0.002</div><div class="lbl">5일 쿨다운</div></div>
+<div class="cd-card"><div class="val" style="color:#00C853">+0.012</div><div class="lbl">7일 쿨다운</div></div>
+<div class="cd-card"><div class="val" style="color:#00C853">+0.015</div><div class="lbl">10일+ 쿨다운</div></div>
+</div>
+<p style="font-size:12px;color:var(--gray-500)">💡 최소 5일 쿨다운 권장. 7일+ 시 효과 최대화.</p>
+</div>
+
+<!-- 최적 로테이션 추천 -->
+<div class="section-card">
+<h3>🔄 최적 로테이션 순서 추천</h3>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">교차 효과 데이터 기반 최적 매체 순환 경로</p>
+<div id="recommendations"></div>
+</div>
+
+<!-- 전환 이력 -->
+<div class="section-card">
+<h3>📋 전환 효과 데이터</h3>
+<div style="overflow-x:auto" id="transHistory"></div>
+</div>
+
+<!-- 데이터 등록 -->
+<div class="section-card">
+<h3>➕ 전환 효과 기록</h3>
+<div class="form-grid">
+<label>이전 매체<select id="tFrom"><option value="뭉치">뭉치</option><option value="퍼플페퍼">퍼플페퍼</option><option value="말차">말차</option><option value="블루">블루</option><option value="버즈빌">버즈빌</option></select></label>
+<label>다음 매체<select id="tTo"><option value="퍼플페퍼">퍼플페퍼</option><option value="뭉치">뭉치</option><option value="말차">말차</option><option value="블루">블루</option><option value="버즈빌">버즈빌</option></select></label>
+<label>전환일<input type="date" id="tDate"></label>
+<label>쿨다운(일)<input type="number" id="tCool" value="5" min="0"></label>
+<label>전환 전 N2 delta<input type="number" id="tPre" step="0.001" value="0"></label>
+<label>전환 후 N2 delta<input type="number" id="tPost" step="0.001" value="0"></label>
+</div>
+<button class="btn btn-primary" style="margin-top:16px" onclick="addTransition()">기록</button>
+</div>
+</div>
+
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div></footer>
+
+<script src="config.js"></script>
+<script src="event-hub.js"></script>
+<script>
+const sources = ['뭉치','퍼플페퍼','말차','블루','버즈빌'];
+
+async function init() {
+  renderMatrix();
+  renderRecommendations();
+  await loadHistory();
+}
+
+function renderMatrix() {
+  // Demo transition effects
+  const effects = {
+    '뭉치→퍼플페퍼':0.018,'뭉치→말차':0.012,'뭉치→블루':0.008,'뭉치→버즈빌':0.005,
+    '퍼플페퍼→뭉치':0.015,'퍼플페퍼→말차':0.010,'퍼플페퍼→블루':0.006,'퍼플페퍼→버즈빌':0.004,
+    '말차→뭉치':0.014,'말차→퍼플페퍼':0.016,'말차→블루':0.009,'말차→버즈빌':0.003,
+    '블루→뭉치':0.011,'블루→퍼플페퍼':0.013,'블루→말차':0.007,'블루→버즈빌':0.002,
+    '버즈빌→뭉치':0.010,'버즈빌→퍼플페퍼':0.012,'버즈빌→말차':0.006,'버즈빌→블루':0.004
+  };
+  const cols = sources.length + 1;
+  let html = `<div class="matrix-grid" style="grid-template-columns:80px repeat(${sources.length},1fr)">`;
+  html += `<div class="matrix-cell matrix-header">From↓ To→</div>`;
+  sources.forEach(s => html += `<div class="matrix-cell matrix-header">${s}</div>`);
+  sources.forEach(from => {
+    html += `<div class="matrix-cell matrix-header">${from}</div>`;
+    sources.forEach(to => {
+      if (from === to) {
+        html += `<div class="matrix-cell boost-neutral">-</div>`;
+      } else {
+        const val = effects[`${from}→${to}`] || 0;
+        const cls = val > 0.01 ? 'boost-pos' : val > 0 ? 'boost-neutral' : 'boost-neg';
+        html += `<div class="matrix-cell ${cls}">${val > 0?'+':''}${(val*100).toFixed(1)}%</div>`;
+      }
+    });
+  });
+  html += '</div>';
+  document.getElementById('transMatrix').innerHTML = html;
+}
+
+function renderRecommendations() {
+  const routes = [
+    {route:['뭉치','퍼플페퍼','말차','뭉치'],score:0.044},
+    {route:['퍼플페퍼','뭉치','말차','퍼플페퍼'],score:0.041},
+    {route:['말차','퍼플페퍼','뭉치','말차'],score:0.045}
+  ];
+  document.getElementById('recommendations').innerHTML = routes.map((r,i) => `
+    <div class="recommend-item">
+      <div style="font-weight:800;color:var(--primary);font-size:18px;width:32px">#${i+1}</div>
+      <div style="flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${r.route.map((s,j) => `<strong>${s}</strong>${j<r.route.length-1?'<span class="recommend-arrow">→</span>':''}`).join('')}
+      </div>
+      <div style="text-align:right"><div style="font-weight:800;color:var(--accent)">+${(r.score*100).toFixed(1)}%</div><div style="font-size:11px;color:var(--gray-500)">총 N2 효과</div></div>
+    </div>`).join('');
+}
+
+async function loadHistory() {
+  let data = await sbQuery('sm_source_transition_effects?order=created_at.desc&limit=20');
+  const el = document.getElementById('transHistory');
+  if (!data.length) {
+    el.innerHTML = '<p style="color:var(--gray-500);text-align:center;padding:20px">전환 효과 데이터 수집 중. M2에 자동 축적됩니다.</p>';
+    return;
+  }
+  el.innerHTML = `<table><thead><tr><th>From</th><th>To</th><th>전환일</th><th>쿨다운</th><th>N2 pre</th><th>N2 post</th><th>Boost</th></tr></thead><tbody>${
+    data.map(d => `<tr><td>${d.from_source_name}</td><td>${d.to_source_name}</td><td>${d.transition_date||'-'}</td><td>${d.cooldown_days}일</td>
+    <td>${d.n2_delta_pre||'-'}</td><td>${d.n2_delta_post||'-'}</td>
+    <td style="color:${(d.transition_boost||0)>0?'#00C853':'#F44336'};font-weight:700">${d.transition_boost||'-'}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+async function addTransition() {
+  await sbInsert('sm_source_transition_effects', {
+    from_source_name: document.getElementById('tFrom').value,
+    to_source_name: document.getElementById('tTo').value,
+    transition_date: document.getElementById('tDate').value,
+    cooldown_days: parseInt(document.getElementById('tCool').value),
+    n2_delta_pre: parseFloat(document.getElementById('tPre').value),
+    n2_delta_post: parseFloat(document.getElementById('tPost').value),
+    transition_boost: parseFloat(document.getElementById('tPost').value) - parseFloat(document.getElementById('tPre').value)
+  });
+  alert('전환 효과 기록 완료!');
+  loadHistory();
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시즌 캘린더 - ONDA</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.cal-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:24px 0}
+@media(max-width:768px){.cal-grid{grid-template-columns:repeat(4,1fr)}}
+.cal-month{background:#fff;border-radius:10px;padding:12px 8px;text-align:center;box-shadow:var(--shadow);min-height:120px;position:relative}
+.cal-month .month-name{font-size:13px;font-weight:700;margin-bottom:8px}
+.cal-event{font-size:10px;padding:3px 6px;border-radius:4px;margin:2px 0;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.season-form{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:24px}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+@media(max-width:768px){.form-grid{grid-template-columns:1fr}}
+.form-grid input,.form-grid select{padding:10px;border:2px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit}
+.form-grid label{font-size:12px;font-weight:600;color:var(--gray-500);display:flex;flex-direction:column;gap:4px}
+.active-seasons{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:24px}
+@media(max-width:768px){.active-seasons{grid-template-columns:1fr}}
+.season-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-left:4px solid}
+.coeff-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:16px}
+.coeff-day{text-align:center;padding:12px 4px;background:var(--gray-50);border-radius:8px}
+.coeff-day .day{font-size:12px;font-weight:600;margin-bottom:4px}
+.coeff-day .val{font-size:18px;font-weight:800}
+</style>
+</head>
+<body>
+<header class="header"><div class="header-inner">
+<a href="admin.html" class="logo">ONDA</a>
+<nav class="nav">
+<a href="engine.html">안티패턴</a>
+<a href="season.html" class="active">시즌캘린더</a>
+<a href="admin.html">관리자</a>
+</nav>
+<button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+</div></header>
+
+<section class="hero" style="padding:120px 20px 60px">
+<h1>📅 시즌/이벤트 캘린더</h1>
+<p>업종별 시즌 이벤트 관리 + 투입량 자동 보정</p>
+</section>
+
+<div class="container" style="margin-top:-40px;padding-bottom:80px">
+
+<!-- 연간 캘린더 -->
+<h2 style="font-size:20px;font-weight:800;margin-bottom:8px">2026년 연간 캘린더</h2>
+<div class="cal-grid" id="calGrid"></div>
+
+<!-- 현재 활성 시즌 -->
+<h2 style="font-size:20px;font-weight:800;margin-bottom:8px">🔴 현재 활성 시즌</h2>
+<div class="active-seasons" id="activeSeasons"></div>
+
+<!-- 요일별 투입 보정 계수 -->
+<div class="season-form">
+<h3 style="font-size:18px;font-weight:700">📊 요일별 투입 보정 계수</h3>
+<p style="font-size:13px;color:var(--gray-500)">수/금/토=50%, 나머지=100-180%. 시즌 보정 곱연산 적용.</p>
+<div class="coeff-grid" id="coeffGrid"></div>
+</div>
+
+<!-- 시즌 등록 폼 -->
+<div class="season-form">
+<h3 style="font-size:18px;font-weight:700">➕ 시즌 이벤트 등록</h3>
+<div class="form-grid">
+<label>이벤트명<input type="text" id="sName" placeholder="예: 크리스마스 시즌"></label>
+<label>시작일<input type="date" id="sStart"></label>
+<label>종료일<input type="date" id="sEnd"></label>
+<label>대상 업종<select id="sIndustry"><option value="all">전체</option><option value="restaurant">맛집</option><option value="cafe">카페</option><option value="bar">술집</option><option value="beauty">미용</option><option value="hospital">병원</option></select></label>
+<label>N2 영향<select id="sImpact"><option value="positive">상승 ↑</option><option value="neutral">중립 →</option><option value="negative">하락 ↓</option></select></label>
+<label>영향 크기<input type="number" id="sMag" value="0.02" step="0.01" min="0" max="0.1"></label>
+</div>
+<button class="btn btn-primary" style="margin-top:16px" onclick="addSeason()">등록</button>
+</div>
+
+<!-- 시즌 목록 -->
+<div class="season-form" style="margin-top:24px">
+<h3 style="font-size:18px;font-weight:700">📋 전체 시즌 목록</h3>
+<div style="overflow-x:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:14px">
+<thead><tr><th style="text-align:left;padding:10px;background:var(--gray-50);border-bottom:2px solid var(--gray-200)">이벤트</th><th>기간</th><th>업종</th><th>영향</th><th>크기</th><th>삭제</th></tr></thead>
+<tbody id="seasonList"></tbody>
+</table></div>
+</div>
+</div>
+
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing. All rights reserved.</div></div></footer>
+
+<script src="config.js"></script>
+<script src="event-hub.js"></script>
+<script>
+const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const impactColors = {positive:'#00C853',neutral:'#FFC107',negative:'#F44336'};
+const dayNames = ['일','월','화','수','목','금','토'];
+const dayWeights = [1.2, 1.0, 1.0, 0.5, 1.0, 0.5, 0.5];
+
+let seasons = [];
+
+async function init() {
+  seasons = await sbQuery('sm_season_calendar?order=start_date');
+  if (!seasons.length) seasons = [
+    {id:1,event_name:'설날 연휴',start_date:'2026-01-28',end_date:'2026-01-30',affected_industries:'all',expected_n2_impact:'negative',expected_magnitude:0.02},
+    {id:2,event_name:'벚꽃 시즌',start_date:'2026-03-25',end_date:'2026-04-15',affected_industries:'cafe',expected_n2_impact:'positive',expected_magnitude:0.03},
+    {id:3,event_name:'여름 휴가',start_date:'2026-07-20',end_date:'2026-08-20',affected_industries:'restaurant',expected_n2_impact:'positive',expected_magnitude:0.04},
+    {id:4,event_name:'크리스마스',start_date:'2026-12-20',end_date:'2026-12-26',affected_industries:'all',expected_n2_impact:'positive',expected_magnitude:0.03},
+    {id:5,event_name:'수능 시즌',start_date:'2026-11-10',end_date:'2026-11-20',affected_industries:'restaurant',expected_n2_impact:'positive',expected_magnitude:0.02}
+  ];
+  renderCalendar();
+  renderActive();
+  renderCoeff();
+  renderList();
+}
+
+function renderCalendar() {
+  document.getElementById('calGrid').innerHTML = monthNames.map((m, i) => {
+    const monthSeasons = seasons.filter(s => {
+      const sm = new Date(s.start_date).getMonth();
+      const em = new Date(s.end_date).getMonth();
+      return i >= sm && i <= em;
+    });
+    return `<div class="cal-month"><div class="month-name">${m}</div>${
+      monthSeasons.map(s => `<div class="cal-event" style="background:${impactColors[s.expected_n2_impact]}">${s.event_name}</div>`).join('')
+    }</div>`;
+  }).join('');
+}
+
+function renderActive() {
+  const today = new Date().toISOString().slice(0,10);
+  const active = seasons.filter(s => s.start_date <= today && s.end_date >= today);
+  const el = document.getElementById('activeSeasons');
+  if (!active.length) {
+    el.innerHTML = '<div style="padding:20px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);text-align:center;color:var(--gray-500)">현재 활성 시즌 없음 ✅</div>';
+    return;
+  }
+  el.innerHTML = active.map(s => `<div class="season-card" style="border-left-color:${impactColors[s.expected_n2_impact]}">
+    <h4 style="font-size:16px;font-weight:700">${s.event_name}</h4>
+    <div style="font-size:13px;color:var(--gray-500);margin-top:4px">${s.start_date} ~ ${s.end_date}</div>
+    <div style="margin-top:8px;font-size:14px">업종: <strong>${s.affected_industries}</strong> · 영향: <strong style="color:${impactColors[s.expected_n2_impact]}">${s.expected_n2_impact}</strong> · 크기: <strong>${s.expected_magnitude}</strong></div>
+    <div style="margin-top:8px;padding:8px 12px;background:var(--gray-50);border-radius:6px;font-size:13px">⚡ 이상 탐지 임계값 자동 상향 중 (시즌 보정)</div>
+  </div>`).join('');
+}
+
+function renderCoeff() {
+  document.getElementById('coeffGrid').innerHTML = dayNames.map((d, i) => {
+    const w = dayWeights[i];
+    const color = w < 0.7 ? '#F44336' : w > 1.0 ? '#00C853' : 'var(--gray-900)';
+    return `<div class="coeff-day"><div class="day">${d}</div><div class="val" style="color:${color}">${(w*100).toFixed(0)}%</div></div>`;
+  }).join('');
+}
+
+function renderList() {
+  document.getElementById('seasonList').innerHTML = seasons.map(s => `<tr>
+    <td style="padding:10px;border-bottom:1px solid var(--gray-100)"><strong>${s.event_name}</strong></td>
+    <td style="padding:10px;border-bottom:1px solid var(--gray-100);font-size:13px">${s.start_date} ~ ${s.end_date}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--gray-100)">${s.affected_industries}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--gray-100)"><span style="color:${impactColors[s.expected_n2_impact]};font-weight:700">${s.expected_n2_impact}</span></td>
+    <td style="padding:10px;border-bottom:1px solid var(--gray-100)">${s.expected_magnitude}</td>
+    <td style="padding:10px;border-bottom:1px solid var(--gray-100)"><button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="delSeason(${s.id})">삭제</button></td>
+  </tr>`).join('');
+}
+
+async function addSeason() {
+  const data = {
+    event_name: document.getElementById('sName').value,
+    start_date: document.getElementById('sStart').value,
+    end_date: document.getElementById('sEnd').value,
+    affected_industries: document.getElementById('sIndustry').value,
+    expected_n2_impact: document.getElementById('sImpact').value,
+    expected_magnitude: parseFloat(document.getElementById('sMag').value)
+  };
+  if (!data.event_name || !data.start_date || !data.end_date) return alert('필수 항목을 입력하세요');
+  await sbInsert('sm_season_calendar', data);
+  await EventHub.emit('season_event_created', data);
+  alert('시즌 등록 완료!');
+  init();
+}
+
+async function delSeason(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  await sbQuery(`sm_season_calendar?id=eq.${id}`, {method:'DELETE'});
+  init();
+}
+
+init();
+</script>
+</body>
+</html>

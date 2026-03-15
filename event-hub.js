@@ -199,6 +199,116 @@ const EventHub = {
         }
         break;
 
+      // === 블로그 필터링 감지 ===
+      case 'blog_filtered':
+        // → 블로그 필터링 기록 + 매체 품질 등급 재계산
+        if (payload.blog_id) {
+          await sbUpdate('sm_blog_snapshots', {id: payload.blog_id}, {is_filtered: true, filtered_date: new Date().toISOString().slice(0,10)});
+        }
+        // → 매체 이상 감지 시 L8/L9 트리거 체크
+        if (payload.source_id) {
+          await sbInsert('sm_risk_alerts', {
+            alert_type: 'conversion_drop',
+            severity: 'warning',
+            condition_met: `source ${payload.source_id}: blog filtered`,
+            is_resolved: false
+          });
+        }
+        break;
+
+      // === 로직 변경 감지 ===
+      case 'logic_change_detected':
+        // → 전 고객 주문서 보류 + 48시간 모니터링
+        await sbInsert('sm_risk_alerts', {
+          alert_type: 'account_ban',
+          severity: 'critical',
+          condition_met: `로직 변경 감지: ${payload.detail || 'N2 중앙값 2σ+ 변동'}`,
+          is_resolved: false
+        });
+        // → 이벤트 분류 기록
+        await sbInsert('sm_recovery_estimates', {
+          event_type: 'logic_change',
+          start_date: new Date().toISOString().slice(0,10),
+          n2_drop: payload.n2_drop || 0
+        });
+        await sbInsert('sm_decision_log', {
+          decision_type: 'logic_change_response',
+          action_taken: '전 고객 주문서 48시간 보류',
+          reasoning_summary: payload.detail || '87K 전체 N2 중앙값 2σ+ 변동 감지',
+          confidence: payload.confidence || 0.7
+        }).catch(() => {});
+        break;
+
+      // === 매체 이상 감지 ===
+      case 'source_health_alert':
+        // → L8/L9 트리거
+        if (payload.source_name) {
+          const lb = await sbQuery(`sm_source_leaderboard?source_name=eq.${payload.source_name}`);
+          if (lb.length) {
+            await sbUpdate('sm_source_leaderboard', {id: lb[0].id}, {
+              beta: (lb[0].beta || 1) + 3,
+              last_updated: new Date().toISOString()
+            });
+          }
+          // Beta params도 업데이트
+          const bp = await sbQuery(`sm_source_beta_params?source_name=eq.${payload.source_name}`);
+          if (bp.length) {
+            await sbUpdate('sm_source_beta_params', {id: bp[0].id}, {
+              beta: parseFloat(bp[0].beta) + 3,
+              last_updated: new Date().toISOString()
+            });
+          }
+        }
+        break;
+
+      // === 시즌 이벤트 시작 ===
+      case 'season_event_started':
+        // → 이상 탐지 임계값 상향 + 투입량 시즌 보정
+        await sbInsert('sm_decision_log', {
+          decision_type: 'season_adjustment',
+          action_taken: `시즌 보정 적용: ${payload.event_name || '시즌 이벤트'}`,
+          reasoning_summary: `시즌 캘린더 일치. 이상 탐지 임계값 상향. 투입량 시즌 보정 곱연산.`,
+          confidence: 0.9
+        }).catch(() => {});
+        break;
+
+      // === 점진적 롤아웃 단계 진행 ===
+      case 'rollout_phase_advanced':
+        if (payload.rollout_id) {
+          await sbUpdate('sm_rollout_phases', {id: payload.rollout_id}, {
+            phase: payload.next_phase || 2,
+            target_pct: payload.target_pct || 20,
+            status: 'active',
+            started_at: new Date().toISOString()
+          });
+        }
+        break;
+
+      // === 결제 연체 ===
+      case 'payment_overdue':
+        if (customerId) {
+          // 즉시: 투입 중단
+          const orders = await sbQuery(`sm_vendor_orders?customer_id=eq.${customerId}&status=eq.pending`);
+          for (const o of orders) {
+            await sbUpdate('sm_vendor_orders', {id: o.id}, {status: 'cancelled', notes: '[자동] 결제 미수 → 투입 중단'});
+          }
+          // 24h 후 2차 알림 스케줄
+          await sbInsert('sm_remarketing_queue', {
+            customer_id: customerId,
+            stage: 1,
+            message_type: 'payment_overdue',
+            scheduled_at: new Date(Date.now() + 86400000).toISOString(),
+            status: 'pending'
+          });
+          await sbInsert('sm_risk_alerts', {
+            alert_type: 'churn_spike',
+            severity: 'critical',
+            condition_met: `customer ${customerId}: 결제 연체`,
+            is_resolved: false
+          });
+        }
+        break;
+
       // === 매체 투입 완료 ===
       case 'vendor_order_completed':
         // → 리더보드 업데이트
