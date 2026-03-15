@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>체험 시퀀스 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">🧪 무료체험 자동 시퀀스</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">D1→D3→D5→D7→D10→D14→D30 자동 알림 + 전환 유도</p>
+
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">시퀀스 타임라인</h3>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding:8px 0">
+        ${['D1|순위확인|#E3F2FD','D3|변동알림|#E8F5E9','D5|만료예고|#FFF3E0','D7|전환유도|#FCE4EC','D10|감쇠경고|#F3E5F5','D14|경쟁리포트|#E0F7FA','D30|로직변경|#EFEBE9'].map(s => {
+          const [d,l,c] = s.split('|');
+          return `<div style="padding:12px 16px;background:${c};border-radius:10px;text-align:center;min-width:90px;flex-shrink:0"><strong>${d}</strong><div style="font-size:11px;color:var(--gray-500);margin-top:4px">${l}</div></div>`;
+        }).join('<div style="color:var(--gray-200);padding-top:8px">→</div>')}
+      </div>
+    </div>
+
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">🚀 온보딩 부스트 모드</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--primary)">180타</div>
+          <div style="font-size:13px;color:var(--gray-500)">D1-D7 (부스트)</div>
+          <div style="font-size:12px;margin-top:4px">+ 리뷰 3건 집중</div>
+        </div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--primary)">150타</div>
+          <div style="font-size:13px;color:var(--gray-500)">D8-D14 (표준)</div>
+          <div style="font-size:12px;margin-top:4px">+ 1주차 성과 리포트</div>
+        </div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--primary)">AI</div>
+          <div style="font-size:13px;color:var(--gray-500)">D15~ (최적화)</div>
+          <div style="font-size:12px;margin-top:4px">+ 월간 ROI 리포트</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table class="dash-table">
+        <thead><tr><th>고객</th><th>D+</th><th>액션</th><th>메시지</th><th>예정</th><th>상태</th><th>처리</th></tr></thead>
+        <tbody id="seqBody"></tbody>
+      </table>
+    </div>
+    <p id="seqEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">체험 시퀀스가 없습니다.</p>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+const actionLabel = {rank_check:'📊 순위확인',alert:'🔔 변동알림',expiry_warn:'⚠️ 만료예고',conversion_push:'🎯 전환유도',decay_warn:'📉 감쇠경고',competitor_report:'🏪 경쟁리포트',logic_change:'🔄 로직변경'};
+async function load() {
+  const data = await sbQuery('sm_trial_sequences?order=scheduled_at.asc&limit=100');
+  if (!data.length) return;
+  document.getElementById('seqEmpty').style.display = 'none';
+  document.getElementById('seqBody').innerHTML = data.map(d => `
+    <tr>
+      <td>#${d.customer_id}</td>
+      <td><strong>D+${d.day_offset}</strong></td>
+      <td>${actionLabel[d.action_type]||d.action_type}</td>
+      <td style="max-width:200px;font-size:13px;color:var(--gray-500)">${(d.message||'').substring(0,50)}...</td>
+      <td style="font-size:13px">${d.scheduled_at?new Date(d.scheduled_at).toLocaleDateString('ko'):'-'}</td>
+      <td><span class="status-badge ${d.status==='pending'?'status-pending':'status-active'}">${d.status}</span></td>
+      <td>${d.status==='pending'?`<button class="btn btn-primary" style="padding:4px 10px;font-size:12px" onclick="markDone(${d.id})">완료</button>`:''}</td>
+    </tr>`).join('');
+}
+async function markDone(id) { await sbUpdate('sm_trial_sequences',{id},{status:'sent',sent_at:new Date().toISOString()}); load(); }
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>대행사 관리 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">🏢 대행사 파트너 관리</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">1-5인 소규모 대행사 → AI 주문서 자동생성 → 화이트라벨</p>
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:12px">볼륨 할인 구조</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px"><strong>Starter</strong><div style="font-size:13px;color:var(--gray-500)">10개 미만</div><div style="font-size:24px;font-weight:800;color:var(--primary)">30%</div></div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px"><strong>Growth</strong><div style="font-size:13px;color:var(--gray-500)">10-30개</div><div style="font-size:24px;font-weight:800;color:var(--primary)">35%</div></div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:8px"><strong>Enterprise</strong><div style="font-size:13px;color:var(--gray-500)">30개+</div><div style="font-size:24px;font-weight:800;color:var(--primary)">40%</div></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>대행사 목록</h3>
+      <button class="btn btn-primary" style="padding:8px 16px;font-size:14px" onclick="addAgency()">+ 대행사 추가</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="dash-table">
+        <thead><tr><th>대행사명</th><th>연락처</th><th>업체 수</th><th>티어</th><th>할인율</th><th>상태</th><th>가입일</th></tr></thead>
+        <tbody id="agBody"></tbody>
+      </table>
+    </div>
+    <p id="agEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">대행사가 없습니다.</p>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+async function load() {
+  const data = await sbQuery('sm_agencies?order=created_at.desc');
+  if (!data.length) return;
+  document.getElementById('agEmpty').style.display='none';
+  document.getElementById('agBody').innerHTML = data.map(a => `
+    <tr><td><strong>${a.name}</strong></td><td>${a.contact||'-'}</td><td>${a.business_count}</td>
+    <td>${a.tier}</td><td>${a.discount_pct}%</td>
+    <td><span class="status-badge ${a.status==='active'?'status-active':'status-pending'}">${a.status}</span></td>
+    <td>${new Date(a.created_at).toLocaleDateString('ko')}</td></tr>`).join('');
+}
+async function addAgency() {
+  const name = prompt('대행사명:'); if (!name) return;
+  const contact = prompt('연락처:');
+  await sbInsert('sm_agencies', { name, contact });
+  load();
+}
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>레퍼럴 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">🤝 레퍼럴 프로그램</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">추천인: 다음달 30% 할인 | 피추천인: 첫달 50% 할인 + 무료체험 2주</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="auto-card" style="text-align:center"><div style="font-size:48px">🎁</div><h3>추천인 혜택</h3><div style="font-size:32px;font-weight:800;color:var(--accent);margin:8px 0">30%</div><p style="color:var(--gray-500);font-size:14px">다음 달 구독료 할인</p></div>
+      <div class="auto-card" style="text-align:center"><div style="font-size:48px">🌟</div><h3>피추천인 혜택</h3><div style="font-size:32px;font-weight:800;color:var(--primary);margin:8px 0">50%</div><p style="color:var(--gray-500);font-size:14px">첫 달 할인 + 무료체험 2주</p></div>
+    </div>
+    <div class="auto-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>레퍼럴 현황</h3>
+        <button class="btn btn-primary" style="padding:8px 16px;font-size:14px" onclick="generateCode()">+ 추천 코드 생성</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="dash-table">
+          <thead><tr><th>코드</th><th>추천인</th><th>피추천인</th><th>상태</th><th>생성일</th></tr></thead>
+          <tbody id="refBody"></tbody>
+        </table>
+      </div>
+      <p id="refEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">레퍼럴이 없습니다.</p>
+    </div>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+async function load() {
+  const data = await sbQuery('sm_referrals?order=created_at.desc');
+  if (!data.length) return;
+  document.getElementById('refEmpty').style.display='none';
+  document.getElementById('refBody').innerHTML = data.map(r => `
+    <tr><td><code style="background:var(--gray-50);padding:2px 8px;border-radius:4px">${r.referral_code}</code></td>
+    <td>#${r.referrer_id||'-'}</td><td>#${r.referred_id||'-'}</td>
+    <td><span class="status-badge ${r.status==='converted'?'status-active':'status-pending'}">${r.status}</span></td>
+    <td>${new Date(r.created_at).toLocaleDateString('ko')}</td></tr>`).join('');
+}
+async function generateCode() {
+  const code = 'ONDA-' + Math.random().toString(36).substring(2,8).toUpperCase();
+  const custId = prompt('추천인 고객 ID:');
+  if (!custId) return;
+  await sbInsert('sm_referrals', { referrer_id: parseInt(custId), referral_code: code });
+  alert(`추천 코드: ${code}`);
+  load();
+}
+load();
+</script>
+</body>
+</html>

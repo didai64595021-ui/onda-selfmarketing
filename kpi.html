@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>KPI 대시보드 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:24px">📈 KPI 대시보드</h2>
+
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">일일 KPI</h3>
+      <div style="overflow-x:auto"><table class="dash-table" id="dailyKpi">
+        <thead><tr><th>지표</th><th>M1 목표</th><th>M6 목표</th><th>M12 목표</th><th>현재</th><th>달성률</th></tr></thead>
+        <tbody>
+          <tr><td>톡톡 발송량</td><td>100건</td><td>400건</td><td>500건</td><td id="kSend">-</td><td id="kSendPct">-</td></tr>
+          <tr><td>카카오 채널 유입</td><td>2-3명</td><td>8-12명</td><td>12-18명</td><td id="kKakao">-</td><td id="kKakaoPct">-</td></tr>
+          <tr><td>무료체험 신청</td><td>1명</td><td>3-5명</td><td>5-8명</td><td id="kTrial">-</td><td id="kTrialPct">-</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">주간 KPI</h3>
+      <div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>지표</th><th>M1 목표</th><th>M6 목표</th><th>M12 목표</th><th>현재</th></tr></thead>
+        <tbody>
+          <tr><td>신규 유료 계약</td><td>1명</td><td>4-5명</td><td>6-7명</td><td id="kConv">-</td></tr>
+          <tr><td>이탈 고객</td><td>0명</td><td>3명 이하</td><td>9명 이하</td><td id="kChurn">-</td></tr>
+          <tr><td>메시지 최고 전환율</td><td>1.5%+</td><td>2.5%+</td><td>3.0%+</td><td id="kMsgRate">-</td></tr>
+          <tr><td>핫리드 발굴</td><td>50건+</td><td>200건+</td><td>200건+</td><td id="kLeads">-</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">월간 KPI</h3>
+      <div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>지표</th><th>M1 목표</th><th>M6 목표</th><th>M12 목표</th><th>현재</th></tr></thead>
+        <tbody>
+          <tr><td>활성 고객</td><td>5명</td><td>71명</td><td>186명</td><td id="kActive">-</td></tr>
+          <tr><td>월 매출</td><td>29만원</td><td>461만원</td><td>1,339만원</td><td id="kRevenue">-</td></tr>
+          <tr><td>이탈률</td><td>&lt;8%</td><td>&lt;5%</td><td>&lt;5%</td><td id="kChurnRate">-</td></tr>
+          <tr><td>평균 객단가</td><td>58,000원</td><td>65,000원</td><td>72,000원</td><td id="kArpu">-</td></tr>
+          <tr><td>CAC (가중평균)</td><td>20,000원</td><td>12,000원</td><td>8,000원</td><td id="kCac">-</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">⚠️ 위험 신호 모니터링</h3>
+      <div id="riskAlerts"></div>
+      <div style="overflow-x:auto"><table class="dash-table">
+        <thead><tr><th>신호</th><th>조건</th><th>대응</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td>전환율 급락</td><td>주간 카카오 유입 전주 대비 50% 이하</td><td>메시지 전면 교체 + 타겟 품질 점검</td><td><span class="status-badge status-active">🟢 정상</span></td></tr>
+          <tr><td>이탈 급증</td><td>월 이탈률 10% 초과</td><td>AT_RISK 대응 강화 + 패키지 가치 점검</td><td><span class="status-badge status-active">🟢 정상</span></td></tr>
+          <tr><td>계정 대량 정지</td><td>일 발송 성공률 50% 이하</td><td>발송 즉시 중단 + 메시지 교체</td><td><span class="status-badge status-active">🟢 정상</span></td></tr>
+          <tr><td>무료체험 전환 급락</td><td>전환율 20% 이하</td><td>온보딩 플로우 점검 + 부스트 확인</td><td><span class="status-badge status-active">🟢 정상</span></td></tr>
+          <tr><td>타겟 DB 고갈</td><td>잔여 10,000건 이하</td><td>채널 다변화 가속</td><td id="targetAlert"><span class="status-badge status-active">🟢 정상</span></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="auto-card">
+      <h3 style="margin-bottom:16px">📅 월별 트리거 이벤트</h3>
+      <div id="triggers"></div>
+    </div>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+async function load() {
+  try {
+    const stats = await sbRpc('get_sm_dashboard_stats');
+    const c = stats.customers||{};
+    const r = stats.revenue||{};
+    const hl = stats.hot_leads||{};
+    document.getElementById('kActive').textContent = (c.active||0)+'명';
+    document.getElementById('kRevenue').textContent = r.this_month ? Math.round(r.this_month/10000)+'만원' : '0원';
+    document.getElementById('kLeads').textContent = (hl.total||0)+'건';
+    document.getElementById('kConv').textContent = (c.active||0)+'명';
+    document.getElementById('kChurn').textContent = (c.churned||0)+'명';
+  } catch(e) {}
+
+  // Target pool
+  const pools = await sbQuery('sm_target_pool?order=priority.asc');
+  const totalRemaining = pools.reduce((s,p) => s + (p.remaining_count||0), 0);
+  if (totalRemaining < 10000) {
+    document.getElementById('targetAlert').innerHTML = '<span class="status-badge status-pending">🔴 고갈 위험</span>';
+  }
+
+  // Monthly triggers
+  const triggers = await sbQuery('sm_monthly_triggers?order=month.asc');
+  document.getElementById('triggers').innerHTML = triggers.map(t => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--gray-100)">
+      <div>
+        <strong>M${t.month}: ${t.trigger_name}</strong>
+        <div style="font-size:13px;color:var(--gray-500)">${t.description}</div>
+        <div style="font-size:12px;color:#dc3545;margin-top:2px">놓치면: ${t.consequence_if_missed}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="status-badge ${t.status==='completed'?'status-active':t.status==='missed'?'status-pending':'status-contacted'}">${t.status}</span>
+        ${t.status==='pending'?`<button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="completeTrigger(${t.id})">완료</button>`:''}
+      </div>
+    </div>`).join('');
+}
+async function completeTrigger(id) {
+  await sbUpdate('sm_monthly_triggers', {id}, {status:'completed', completed_at:new Date().toISOString()});
+  load();
+}
+load();
+</script>
+</body>
+</html>

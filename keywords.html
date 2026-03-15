@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>키워드 확장 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">🔍 키워드 확장 & 자기잠식 감지</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">경쟁 낮고 검색량 높은 키워드 추천 (프로 패키지)</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="auto-card">
+        <h3 style="margin-bottom:16px">키워드 제안</h3>
+        <div style="overflow-x:auto">
+          <table class="dash-table">
+            <thead><tr><th>원본 키워드</th><th>제안</th><th>경쟁</th><th>적용</th></tr></thead>
+            <tbody id="kwBody"></tbody>
+          </table>
+        </div>
+        <p id="kwEmpty" style="text-align:center;padding:20px;color:var(--gray-500);font-size:13px">제안된 키워드가 없습니다.</p>
+      </div>
+      <div class="auto-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3>⚠️ 자기잠식 감지</h3>
+          <button class="btn btn-outline" style="padding:6px 12px;font-size:13px" onclick="detectCannibal()">스캔</button>
+        </div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">같은 키워드에 관리업체 2+곳: 선착순 보호</p>
+        <div id="cannibalList"></div>
+        <p id="cannibalEmpty" style="text-align:center;padding:20px;color:var(--gray-500);font-size:13px">자기잠식 없음 ✅</p>
+      </div>
+    </div>
+
+    <div class="auto-card">
+      <h3 style="margin-bottom:16px">📊 매체 교차 효과</h3>
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">전환 순서/쿨다운 기간별 효과 측정</p>
+      <div style="overflow-x:auto">
+        <table class="dash-table">
+          <thead><tr><th>From</th><th>To</th><th>쿨다운</th><th>N2 변동(전)</th><th>N2 변동(후)</th><th>전환 부스트</th></tr></thead>
+          <tbody id="transBody"></tbody>
+        </table>
+      </div>
+      <p id="transEmpty" style="text-align:center;padding:20px;color:var(--gray-500);font-size:13px">교차 효과 데이터 없음. 매체 전환 시 자동 수집됩니다.</p>
+    </div>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+const compColor = {low:'var(--accent)',medium:'#fd7e14',high:'#dc3545'};
+async function load() {
+  const kw = await sbQuery('sm_keyword_suggestions?order=created_at.desc&limit=20');
+  if (kw.length) {
+    document.getElementById('kwEmpty').style.display='none';
+    document.getElementById('kwBody').innerHTML = kw.map(k=>`
+      <tr><td>${k.original_keyword}</td><td><strong>${k.suggested_keyword}</strong></td>
+      <td><span style="color:${compColor[k.competition_level]||'#666'};font-weight:600">${k.competition_level||'-'}</span></td>
+      <td>${k.is_applied?'✅':'<button class="btn btn-outline" style="padding:2px 8px;font-size:12px" onclick="applyKw('+k.id+')">적용</button>'}</td></tr>`).join('');
+  }
+  const cannibal = await sbQuery('sm_cannibalization?is_resolved=eq.false');
+  if (cannibal.length) {
+    document.getElementById('cannibalEmpty').style.display='none';
+    document.getElementById('cannibalList').innerHTML = cannibal.map(c=>`
+      <div style="padding:12px;background:#FFF3CD;border-radius:8px;margin-bottom:8px">
+        <strong>⚠️ ${c.keyword}</strong>
+        <div style="font-size:13px;color:var(--gray-500)">고객: ${(c.customer_names||[]).join(', ')}</div>
+        <div style="font-size:12px;margin-top:4px">${c.resolution||'해결 필요: 후발에게 대체 키워드 제안'}</div>
+      </div>`).join('');
+  }
+  const trans = await sbQuery('sm_source_transitions?order=created_at.desc&limit=10');
+  if (trans.length) {
+    document.getElementById('transEmpty').style.display='none';
+    document.getElementById('transBody').innerHTML = trans.map(t=>`
+      <tr><td>${t.from_source}</td><td>${t.to_source}</td><td>${t.cooldown_days}일</td>
+      <td>${t.n2_delta_pre||'-'}</td><td>${t.n2_delta_post||'-'}</td>
+      <td style="color:${(t.transition_boost||0)>0?'var(--accent)':'#dc3545'};font-weight:700">${t.transition_boost||'-'}</td></tr>`).join('');
+  }
+}
+async function applyKw(id) { await sbUpdate('sm_keyword_suggestions',{id},{is_applied:true}); load(); }
+async function detectCannibal() { const cnt = await sbRpc('detect_cannibalization'); alert(cnt+'건 감지'); load(); }
+load();
+</script>
+</body>
+</html>

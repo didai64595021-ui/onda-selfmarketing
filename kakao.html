@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>카카오 자동응답 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
+
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">💬 카카오 자동응답 시퀀스</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">채널 추가 → 24h → 72h → 7d 자동 발송</p>
+
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px">시퀀스 흐름</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center">
+        <div style="padding:16px;background:#E3F2FD;border-radius:12px"><div style="font-size:24px">👋</div><strong>즉시</strong><div style="font-size:12px;color:var(--gray-500);margin-top:4px">환영 + 무료체험 안내</div></div>
+        <div style="padding:16px;background:#E8F5E9;border-radius:12px"><div style="font-size:24px">⏰</div><strong>24시간</strong><div style="font-size:12px;color:var(--gray-500);margin-top:4px">리마인드</div></div>
+        <div style="padding:16px;background:#FFF3E0;border-radius:12px"><div style="font-size:24px">📊</div><strong>72시간</strong><div style="font-size:12px;color:var(--gray-500);margin-top:4px">성과 사례</div></div>
+        <div style="padding:16px;background:#FCE4EC;border-radius:12px"><div style="font-size:24px">🔥</div><strong>7일</strong><div style="font-size:12px;color:var(--gray-500);margin-top:4px">마지막 안내</div></div>
+      </div>
+    </div>
+
+    <div class="dash-stats" id="kakaoStats" style="margin-bottom:24px"></div>
+
+    <div style="overflow-x:auto">
+      <table class="dash-table">
+        <thead><tr><th>고객</th><th>단계</th><th>메시지</th><th>예정</th><th>발송</th><th>상태</th><th>액션</th></tr></thead>
+        <tbody id="kakaoBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+const stageLabel = { welcome:'👋 즉시', '24h':'⏰ 24시간', '72h':'📊 72시간', '7d':'🔥 7일', custom:'📝 커스텀' };
+async function load() {
+  const data = await sbQuery('sm_kakao_sequences?order=scheduled_at.asc&limit=50');
+  const pending = data.filter(d => d.status === 'pending').length;
+  const sent = data.filter(d => d.status !== 'pending').length;
+  document.getElementById('kakaoStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${data.length}</div><div class="label">전체</div></div>
+    <div class="dash-stat"><div class="number">${pending}</div><div class="label">대기</div></div>
+    <div class="dash-stat"><div class="number">${sent}</div><div class="label">발송완료</div></div>
+    <div class="dash-stat"><div class="number">${data.length?((sent/data.length)*100).toFixed(0):0}%</div><div class="label">발송률</div></div>`;
+  document.getElementById('kakaoBody').innerHTML = data.length ? data.map(d => `
+    <tr>
+      <td>#${d.customer_id}</td>
+      <td>${stageLabel[d.stage]||d.stage}</td>
+      <td style="max-width:200px;font-size:13px;color:var(--gray-500)">${(d.message_template||'').substring(0,60)}...</td>
+      <td style="font-size:13px">${d.scheduled_at?new Date(d.scheduled_at).toLocaleString('ko'):'-'}</td>
+      <td style="font-size:13px">${d.sent_at?new Date(d.sent_at).toLocaleString('ko'):'-'}</td>
+      <td><span class="status-badge ${d.status==='pending'?'status-pending':'status-active'}">${d.status}</span></td>
+      <td>${d.status==='pending'?`<button class="btn btn-primary" style="padding:4px 12px;font-size:12px" onclick="markSent(${d.id})">발송</button>`:''}</td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:20px">시퀀스가 없습니다. 고객이 카카오 채널을 추가하면 자동 생성됩니다.</td></tr>';
+}
+async function markSent(id) { await sbUpdate('sm_kakao_sequences', {id}, {status:'sent', sent_at:new Date().toISOString()}); load(); }
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>커뮤니티 시딩 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">📝 커뮤니티 시딩</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">아이보스/셀클럽/당근마켓/네이버카페 주1회 콘텐츠</p>
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:12px">월간 콘텐츠 로테이션</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center">
+        <div style="padding:16px;background:#E3F2FD;border-radius:8px"><strong>1주차</strong><div style="font-size:12px;color:var(--gray-500)">로직 변경 분석</div></div>
+        <div style="padding:16px;background:#E8F5E9;border-radius:8px"><strong>2주차</strong><div style="font-size:12px;color:var(--gray-500)">업종별 리워드 효율</div></div>
+        <div style="padding:16px;background:#FFF3E0;border-radius:8px"><strong>3주차</strong><div style="font-size:12px;color:var(--gray-500)">역분석 사례</div></div>
+        <div style="padding:16px;background:#F3E5F5;border-radius:8px"><strong>4주차</strong><div style="font-size:12px;color:var(--gray-500)">안티패턴 인사이트</div></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>콘텐츠 목록</h3>
+      <button class="btn btn-primary" style="padding:8px 16px;font-size:14px" onclick="addContent()">+ 콘텐츠 추가</button>
+    </div>
+    <div id="contentList"></div>
+    <p id="contentEmpty" style="text-align:center;padding:20px;color:var(--gray-500)">콘텐츠가 없습니다.</p>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+const platformLabel = {iboss:'아이보스',selclub:'셀클럽',danggeun:'당근마켓',naver_cafe:'네이버카페'};
+const typeLabel = {logic_analysis:'로직분석',reward_efficiency:'리워드효율',case_study:'역분석사례',anti_pattern:'안티패턴'};
+async function load() {
+  const data = await sbQuery('sm_community_content?order=created_at.desc');
+  if (!data.length) return;
+  document.getElementById('contentEmpty').style.display='none';
+  document.getElementById('contentList').innerHTML = data.map(c => `
+    <div class="auto-card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+            <span class="status-badge status-contacted">${platformLabel[c.platform]||c.platform}</span>
+            <span style="font-size:12px;color:var(--gray-500)">${typeLabel[c.content_type]||c.content_type}</span>
+            <span class="status-badge ${c.status==='published'?'status-active':'status-pending'}">${c.status}</span>
+          </div>
+          <strong>${c.title||'제목 없음'}</strong>
+          <div style="font-size:13px;color:var(--gray-500);margin-top:4px">${(c.content||'').substring(0,100)}...</div>
+          <div style="font-size:12px;color:var(--gray-500);margin-top:4px">참여: ${c.engagement_count} | 리드: ${c.lead_count}</div>
+        </div>
+        ${c.status!=='published'?`<button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="publish(${c.id})">발행</button>`:''}
+      </div>
+    </div>`).join('');
+}
+async function addContent() {
+  const title = prompt('제목:'); if(!title) return;
+  const platform = prompt('플랫폼 (iboss/selclub/danggeun/naver_cafe):') || 'iboss';
+  const type = prompt('유형 (logic_analysis/reward_efficiency/case_study/anti_pattern):') || 'logic_analysis';
+  await sbInsert('sm_community_content', {title, platform, content_type:type, week_number:Math.ceil(new Date().getDate()/7)});
+  load();
+}
+async function publish(id) { await sbUpdate('sm_community_content',{id},{status:'published',published_at:new Date().toISOString()}); load(); }
+load();
+</script>
+</body>
+</html>

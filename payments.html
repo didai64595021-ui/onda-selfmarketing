@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>결제 관리 - ONDA</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="header"><div class="header-inner"><a href="admin.html" class="logo">ONDA</a><nav class="nav"><a href="admin.html">어드민</a></nav><button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button></div></header>
+<section class="section" style="padding-top:100px">
+  <div class="container">
+    <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">💳 결제 관리</h2>
+    <p style="color:var(--gray-500);margin-bottom:24px">결제 실패 자동 대응: 즉시→24h→48h→7d 해지</p>
+    <div class="auto-card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:12px">결제 실패 자동 대응 플로우</h3>
+      <div style="display:flex;gap:8px;overflow-x:auto">
+        <div style="padding:12px;background:#FCE4EC;border-radius:8px;min-width:120px;text-align:center;flex-shrink:0"><strong>즉시</strong><div style="font-size:12px;color:var(--gray-500)">투입 중단<br>카카오 알림</div></div>
+        <div style="color:var(--gray-200);padding-top:16px">→</div>
+        <div style="padding:12px;background:#FFF3E0;border-radius:8px;min-width:120px;text-align:center;flex-shrink:0"><strong>24h</strong><div style="font-size:12px;color:var(--gray-500)">2차 알림</div></div>
+        <div style="color:var(--gray-200);padding-top:16px">→</div>
+        <div style="padding:12px;background:#FFF3CD;border-radius:8px;min-width:120px;text-align:center;flex-shrink:0"><strong>48h</strong><div style="font-size:12px;color:var(--gray-500)">서비스 중단<br>(크롤링 유지)</div></div>
+        <div style="color:var(--gray-200);padding-top:16px">→</div>
+        <div style="padding:12px;background:#F8D7DA;border-radius:8px;min-width:120px;text-align:center;flex-shrink:0"><strong>7d</strong><div style="font-size:12px;color:var(--gray-500)">해지 처리</div></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>결제 내역</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="padding:8px 16px;font-size:14px" onclick="addPayment()">+ 결제 추가</button>
+        <button class="btn btn-outline" style="padding:8px 16px;font-size:14px" onclick="calcRefund()">💰 환불 계산</button>
+      </div>
+    </div>
+    <div class="dash-stats" id="payStats" style="margin-bottom:16px"></div>
+    <div style="overflow-x:auto">
+      <table class="dash-table">
+        <thead><tr><th>고객</th><th>금액</th><th>패키지</th><th>결제일</th><th>상태</th><th>실패횟수</th><th>액션</th></tr></thead>
+        <tbody id="payBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<footer class="footer"><div class="footer-inner"><div class="footer-bottom">© 2026 ONDA Marketing</div></div></footer>
+<script src="config.js"></script><script src="app.js"></script>
+<script>
+const statusLabel = {paid:'결제완료',pending:'대기',failed:'실패',grace:'유예',refunded:'환불'};
+const statusClass = {paid:'status-active',pending:'status-pending',failed:'',grace:'status-contacted',refunded:'status-converted'};
+async function load() {
+  const data = await sbQuery('sm_payments?order=created_at.desc&limit=50');
+  const paid = data.filter(d=>d.status==='paid').reduce((s,d)=>s+d.amount,0);
+  const failed = data.filter(d=>d.status==='failed').length;
+  document.getElementById('payStats').innerHTML = `
+    <div class="dash-stat"><div class="number">${data.length}</div><div class="label">전체</div></div>
+    <div class="dash-stat"><div class="number" style="color:var(--accent)">${paid.toLocaleString()}원</div><div class="label">결제 완료</div></div>
+    <div class="dash-stat"><div class="number" style="color:#dc3545">${failed}</div><div class="label">실패</div></div>
+    <div class="dash-stat"><div class="number">${data.filter(d=>d.status==='grace').length}</div><div class="label">유예 중</div></div>`;
+  document.getElementById('payBody').innerHTML = data.length ? data.map(d => `
+    <tr>
+      <td>#${d.customer_id||'-'}</td>
+      <td style="font-weight:700">${d.amount?.toLocaleString()}원</td>
+      <td>${d.package||'-'}</td>
+      <td>${d.payment_date}</td>
+      <td><span class="status-badge ${statusClass[d.status]||''}">${statusLabel[d.status]||d.status}</span></td>
+      <td>${d.failure_count||0}</td>
+      <td>${d.status==='paid'?'':`<button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="failPayment(${d.id})">실패 처리</button>`}</td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--gray-500)">결제 내역 없음</td></tr>';
+}
+async function addPayment() {
+  const custId = prompt('고객 ID:'); if(!custId) return;
+  const amount = prompt('금액:'); if(!amount) return;
+  const pkg = prompt('패키지 (starter/growth/pro):') || 'starter';
+  await sbInsert('sm_payments', {customer_id:parseInt(custId), amount:parseInt(amount), package:pkg, status:'paid'});
+  load();
+}
+async function failPayment(id) {
+  const result = await sbRpc('handle_payment_failure', {payment_id: id});
+  alert(JSON.stringify(result, null, 2));
+  load();
+}
+async function calcRefund() {
+  const custId = prompt('환불 계산할 고객 ID:'); if(!custId) return;
+  const result = await sbRpc('calculate_refund', {cust_id: parseInt(custId)});
+  alert(`환불 계산 결과:\n총 결제: ${result.total_paid?.toLocaleString()}원\n사용일: ${result.days_used}일\n집행 원가: ${result.executed_cost?.toLocaleString()}원\n환불액: ${result.refund_amount?.toLocaleString()}원`);
+}
+load();
+</script>
+</body>
+</html>
