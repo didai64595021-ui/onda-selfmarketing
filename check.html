@@ -276,13 +276,16 @@ function extractPlaceId(input) {
 }
 
 // 캐시 (1시간)
-function getCacheKey(kw, pid) { return 'onda_check_' + kw + '_' + (pid || ''); }
+// 캐시: 키워드+place_id 조합별로 별도 저장. 같은 키워드라도 place_id 다르면 다른 캐시.
+function getCacheKey(kw, pid) { return 'onda_check_' + encodeURIComponent(kw) + '_' + (pid || 'noplace'); }
 function getCache(kw, pid) {
   try {
     const raw = localStorage.getItem(getCacheKey(kw, pid));
     if (!raw) return null;
     const obj = JSON.parse(raw);
     if (Date.now() - obj.ts > 3600000) { localStorage.removeItem(getCacheKey(kw, pid)); return null; }
+    // 캐시된 데이터의 place_id가 현재 요청과 다르면 캐시 무효
+    if (pid && obj.data?.my_business?.place_id !== pid) return null;
     return obj.data;
   } catch { return null; }
 }
