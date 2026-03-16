@@ -7,568 +7,136 @@
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-/* ====== 검색 히어로 ====== */
+/* ====== 히어로 ====== */
 .check-hero {
   background: linear-gradient(135deg, var(--primary) 0%, #0041A3 100%);
-  color: #fff;
-  padding: 140px 20px 80px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+  color: #fff; padding: 130px 20px 70px; text-align: center; position: relative; overflow: hidden;
 }
 .check-hero::before {
-  content: '';
-  position: absolute;
-  top: -50%; left: -50%;
-  width: 200%; height: 200%;
-  background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.06) 0%, transparent 50%);
-  pointer-events: none;
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.06) 0%, transparent 50%); pointer-events: none;
 }
-.check-hero h1 {
-  font-size: 40px;
-  font-weight: 800;
-  margin-bottom: 12px;
-  letter-spacing: -1px;
-  line-height: 1.2;
-  position: relative;
-}
-.check-hero .hero-sub {
-  font-size: 17px;
-  opacity: 0.85;
-  margin-bottom: 36px;
-  position: relative;
-}
+.check-hero h1 { font-size: 36px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; line-height: 1.2; position: relative; }
+.check-hero .sub { font-size: 16px; opacity: 0.85; margin-bottom: 32px; position: relative; }
 
-/* ====== 검색 바 ====== */
-.search-box {
-  max-width: 560px;
-  margin: 0 auto;
-  position: relative;
-  display: flex;
-  gap: 8px;
+/* ====== 입력 폼 ====== */
+.check-form { max-width: 560px; margin: 0 auto; position: relative; }
+.check-field { margin-bottom: 12px; }
+.check-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: rgba(255,255,255,0.8); text-align: left; }
+.check-field input {
+  width: 100%; padding: 14px 16px; border: 2px solid rgba(255,255,255,0.2); border-radius: 12px;
+  background: rgba(255,255,255,0.12); color: #fff; font-size: 16px; font-family: inherit;
+  backdrop-filter: blur(4px); outline: none; transition: border-color 0.2s;
 }
-.search-box input {
-  flex: 1;
-  padding: 16px 20px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-family: inherit;
-  outline: none;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+.check-field input::placeholder { color: rgba(255,255,255,0.5); }
+.check-field input:focus { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.18); }
+.check-field .hint { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; text-align: left; }
+.check-btn {
+  width: 100%; padding: 16px; border: none; border-radius: 12px; background: #fff;
+  color: var(--primary); font-size: 17px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: all 0.2s; margin-top: 4px;
 }
-.search-box input::placeholder { color: #adb5bd; }
-.search-box button {
-  padding: 16px 28px;
-  background: #fff;
-  color: var(--primary);
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-  transition: background 0.2s;
-}
-.search-box button:hover { background: var(--gray-50); }
-.search-hint {
-  margin-top: 16px;
-  font-size: 14px;
-  opacity: 0.7;
-  position: relative;
-}
+.check-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+.check-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.check-badge { display: inline-block; background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 20px; font-size: 13px; margin-bottom: 20px; position: relative; }
+
+/* ====== 로딩 ====== */
+.loading-section { display: none; padding: 80px 20px; text-align: center; }
+.loading-section.active { display: block; }
+.spinner { width: 48px; height: 48px; border: 4px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ====== 에러 ====== */
+.error-box { display: none; max-width: 560px; margin: 20px auto; padding: 16px; background: #FCE4EC; color: #C62828; border-radius: 12px; text-align: center; font-size: 14px; }
+.error-box.active { display: block; }
 
 /* ====== 결과 영역 ====== */
-.results-section {
-  padding: 48px 20px 80px;
-  background: #F5F6F8;
-  min-height: 200px;
-  display: none;
-}
-.results-inner {
-  max-width: 800px;
-  margin: 0 auto;
-}
-.results-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: var(--gray-900);
-}
-.results-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.result-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.result-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-}
-.result-info h4 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.result-info span {
-  font-size: 13px;
-  color: var(--gray-500);
-}
-.result-badge {
-  padding: 6px 16px;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-/* ====== 로딩 / 빈 상태 ====== */
-.loading-spinner {
-  text-align: center;
-  padding: 48px 0;
-  color: var(--gray-500);
-}
-.loading-spinner::before {
-  content: '';
-  display: block;
-  width: 36px; height: 36px;
-  border: 3px solid var(--gray-200);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 16px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.empty-state {
-  text-align: center;
-  padding: 48px 0;
-  color: var(--gray-500);
-  font-size: 15px;
-}
-
-/* ====== 리포트 섹션 ====== */
-.report-section {
-  padding: 32px 20px 80px;
-  background: #F5F6F8;
-  display: none;
-}
-.report-inner {
-  max-width: 900px;
-  margin: 0 auto;
-}
-.report-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--gray-500);
-  cursor: pointer;
-  margin-bottom: 20px;
-  background: none;
-  border: none;
-  font-family: inherit;
-  padding: 0;
-}
-.report-back:hover { color: var(--primary); }
+.result-section { display: none; padding: 40px 20px 80px; max-width: 800px; margin: 0 auto; }
+.result-section.active { display: block; }
 
 /* 헤더 카드 */
-.report-header {
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px 32px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-.rank-badge {
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  font-weight: 800;
-  color: #fff;
-  flex-shrink: 0;
-}
+.biz-header { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.rank-badge { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: 800; flex-shrink: 0; }
 .rank-badge.green { background: #10B981; }
 .rank-badge.orange { background: #F59E0B; }
 .rank-badge.red { background: #EF4444; }
-.rank-badge.gray { background: var(--gray-500); }
-.report-header-info { flex: 1; }
-.report-header-info h2 {
-  font-size: 22px;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-.report-header-info .keyword-tag {
-  font-size: 14px;
-  color: var(--gray-500);
-}
-.report-header-right {
-  text-align: right;
-  flex-shrink: 0;
-}
-.n2-change {
-  font-size: 14px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 8px;
-}
-.n2-change.up { background: #D1FAE5; color: #065F46; }
-.n2-change.down { background: #FEE2E2; color: #991B1B; }
-.n2-change.flat { background: var(--gray-50); color: var(--gray-500); }
-.place-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--primary);
-  margin-top: 6px;
-}
-.place-link:hover { text-decoration: underline; }
+.biz-header .info { flex: 1; min-width: 0; }
+.biz-header .biz-name { font-size: 20px; font-weight: 800; color: var(--gray-900); }
+.biz-header .biz-keyword { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+.biz-header .n2-badge { font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 8px; flex-shrink: 0; }
+.n2-up { background: #D1FAE5; color: #065F46; }
+.n2-down { background: #FEE2E2; color: #991B1B; }
+.n2-flat { background: #F3F4F6; color: #6B7280; }
+.place-link { color: #10B981; font-size: 12px; text-decoration: underline; }
 
-/* 메트릭 그리드 */
-.metric-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-@media(max-width:768px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
-.metric-box {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.metric-box .label {
-  font-size: 12px;
-  color: var(--gray-500);
-  font-weight: 500;
-  margin-bottom: 6px;
-}
-.metric-box .value {
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--gray-900);
-  font-variant-numeric: tabular-nums;
-}
-.metric-box .change {
-  font-size: 12px;
-  font-weight: 600;
-  margin-top: 4px;
-}
-.change-up { color: #10B981; }
-.change-down { color: #EF4444; }
-.change-flat { color: var(--gray-500); }
+/* 지표 그리드 */
+.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.metric-box { background: #fff; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.metric-box .label { font-size: 11px; color: var(--gray-500); font-weight: 600; margin-bottom: 6px; }
+.metric-box .value { font-size: 22px; font-weight: 800; color: var(--gray-900); font-variant-numeric: tabular-nums; }
+.metric-box .diff { font-size: 11px; font-weight: 600; margin-top: 2px; }
+.diff-up { color: #10B981; }
+.diff-down { color: #EF4444; }
+.diff-flat { color: #9CA3AF; }
+@media(max-width:480px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
 
-/* 기간별 변동 */
-.period-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  margin-bottom: 20px;
-}
-.period-card h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-.period-tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.period-tab {
-  padding: 6px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--gray-200);
-  background: #fff;
-  color: var(--gray-500);
-  font-family: inherit;
-  transition: all 0.2s;
-}
-.period-tab.active {
-  background: var(--gray-900);
-  color: #fff;
-  border-color: var(--gray-900);
-}
-.period-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-@media(max-width:480px) { .period-grid { grid-template-columns: 1fr; } }
-.period-cell {
-  background: var(--gray-50);
-  border-radius: 10px;
-  padding: 16px;
-  text-align: center;
-}
-.period-cell .p-label {
-  font-size: 12px;
-  color: var(--gray-500);
-  margin-bottom: 6px;
-}
-.period-cell .p-from-to {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gray-900);
-  margin-bottom: 4px;
-  font-variant-numeric: tabular-nums;
-}
-.period-cell .p-delta {
-  font-size: 13px;
-  font-weight: 700;
-}
+/* 기간 탭 */
+.period-section { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 20px; }
+.period-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #F5F6F8; border-radius: 10px; padding: 3px; }
+.period-tab { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; background: transparent; color: var(--gray-500); font-family: inherit; transition: all 0.15s; }
+.period-tab.active { background: var(--gray-900); color: #fff; }
+.period-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.period-cell { background: #F8F9FA; border-radius: 10px; padding: 12px; text-align: center; }
+.period-cell .p-label { font-size: 10px; color: var(--gray-500); margin-bottom: 4px; }
+.period-cell .p-value { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.period-cell .p-from { font-size: 10px; color: var(--gray-400); margin-top: 2px; font-variant-numeric: tabular-nums; }
 
 /* 차트 */
-.chart-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  margin-bottom: 20px;
-}
-.chart-card h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-.chart-tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-.chart-tab {
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--gray-200);
-  background: #fff;
-  color: var(--gray-500);
-  font-family: inherit;
-  transition: all 0.2s;
-}
-.chart-tab.active {
-  background: var(--gray-900);
-  color: #fff;
-  border-color: var(--gray-900);
-}
-.chart-wrapper {
-  position: relative;
-  height: 260px;
-}
+.chart-section { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 20px; }
+.chart-tabs { display: flex; gap: 4px; margin-bottom: 12px; background: #F5F6F8; border-radius: 8px; padding: 2px; width: fit-content; }
+.chart-tab { padding: 6px 14px; font-size: 11px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; background: transparent; color: var(--gray-500); font-family: inherit; }
+.chart-tab.active { background: var(--gray-900); color: #fff; }
+.chart-wrap { height: 220px; position: relative; }
+.no-chart { text-align: center; color: var(--gray-400); padding: 40px 0; font-size: 14px; }
 
 /* 경쟁사 테이블 */
-.comp-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  margin-bottom: 20px;
-  overflow-x: auto;
-}
-.comp-card h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-.comp-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-.comp-table th {
-  text-align: left;
-  padding: 10px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--gray-500);
-  border-bottom: 2px solid var(--gray-100);
-  white-space: nowrap;
-}
-.comp-table td {
-  padding: 12px;
-  border-bottom: 1px solid var(--gray-100);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.comp-table tr.me {
-  background: #EBF5FF;
-}
-.comp-table tr.me td:first-child::after {
-  content: ' (내 매장)';
-  font-size: 11px;
-  color: var(--primary);
-  font-weight: 600;
-}
-.comp-table .biz-link {
-  color: var(--primary);
-  font-size: 12px;
-  margin-left: 4px;
-}
+.comp-section { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 20px; }
+.comp-section h3 { font-size: 14px; font-weight: 700; color: var(--gray-500); margin-bottom: 12px; }
+.comp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.comp-table th { text-align: left; padding: 8px 6px; color: var(--gray-400); font-weight: 600; border-bottom: 1px solid var(--gray-200); font-size: 11px; }
+.comp-table td { padding: 8px 6px; border-bottom: 1px solid #F3F4F6; font-variant-numeric: tabular-nums; }
+.comp-table .mine { background: rgba(0,102,255,0.04); }
+.comp-table .mine td:first-child::after { content: ' ⭐'; }
+.comp-table .comp-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comp-table a { color: var(--primary); }
 
-/* 진단 카드 */
-.diag-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  margin-bottom: 20px;
-}
-.diag-card h3 {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 20px;
-}
-.diag-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-@media(max-width:480px) { .diag-grid { grid-template-columns: 1fr; } }
-.diag-item {
-  text-align: center;
-  padding: 16px;
-  background: var(--gray-50);
-  border-radius: 12px;
-}
-.diag-item .d-label {
-  font-size: 12px;
-  color: var(--gray-500);
-  margin-bottom: 6px;
-}
-.diag-item .d-value {
-  font-size: 28px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.health-bar {
-  height: 12px;
-  background: var(--gray-100);
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-.health-fill {
-  height: 100%;
-  border-radius: 6px;
-  transition: width 0.6s ease;
-}
-.health-label {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-.diag-text {
-  font-size: 14px;
-  color: var(--gray-500);
-  line-height: 1.7;
-  margin-top: 16px;
-}
+/* 진단 */
+.diag-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 20px; text-align: center; }
+.health-score { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px; font-weight: 800; color: #fff; }
+.health-score.green { background: #10B981; }
+.health-score.yellow { background: #F59E0B; }
+.health-score.red { background: #EF4444; }
+.diag-text { font-size: 14px; color: var(--gray-500); line-height: 1.7; max-width: 480px; margin: 0 auto; }
 
 /* CTA */
-.cta-card {
-  background: linear-gradient(135deg, var(--primary) 0%, #0041A3 100%);
-  border-radius: 16px;
-  padding: 40px 32px;
-  text-align: center;
-  color: #fff;
-  margin-bottom: 20px;
-}
-.cta-card h3 {
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 8px;
-}
-.cta-card p {
-  font-size: 15px;
-  opacity: 0.85;
-  margin-bottom: 28px;
-}
-.cta-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.cta-buttons .btn-trial {
-  padding: 14px 32px;
-  background: #fff;
-  color: var(--primary);
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s;
-}
-.cta-buttons .btn-trial:hover { background: var(--gray-50); }
-.cta-buttons .btn-kakao {
-  padding: 14px 32px;
-  background: #FEE500;
-  color: #3C1E1E;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s;
-}
-.cta-buttons .btn-kakao:hover { background: #FAD800; }
+.cta-card { background: linear-gradient(135deg, var(--primary) 0%, #0041A3 100%); border-radius: 16px; padding: 32px 24px; text-align: center; color: #fff; }
+.cta-card h3 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.cta-card p { font-size: 14px; opacity: 0.85; margin-bottom: 24px; }
+.cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.cta-btns a { padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 700; text-align: center; min-width: 160px; }
+.cta-trial { background: #fff; color: var(--primary); }
+.cta-kakao { background: #FEE500; color: #3C1E1E; }
 
-/* 모바일 */
+/* 새 검색 */
+.new-search { text-align: center; margin-top: 32px; }
+.new-search button { padding: 12px 32px; border: 2px solid var(--gray-200); border-radius: 10px; background: #fff; color: var(--gray-500); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
 @media(max-width:768px) {
-  .check-hero h1 { font-size: 28px; }
-  .check-hero { padding: 120px 20px 60px; }
-  .search-box { flex-direction: column; }
-  .search-box button { width: 100%; }
-  .report-header { flex-direction: column; text-align: center; gap: 12px; padding: 24px 20px; }
-  .report-header-right { text-align: center; }
-  .comp-table { font-size: 12px; }
-  .comp-table th, .comp-table td { padding: 8px 6px; }
-  .cta-card { padding: 32px 20px; }
-  .cta-card h3 { font-size: 20px; }
-}
-
-/* 페이드인 */
-.fade-up {
-  opacity: 0;
-  transform: translateY(16px);
-  animation: fadeUp 0.5s ease forwards;
-}
-@keyframes fadeUp {
-  to { opacity: 1; transform: translateY(0); }
+  .check-hero h1 { font-size: 26px; }
+  .biz-header { padding: 16px; gap: 12px; }
+  .rank-badge { width: 44px; height: 44px; font-size: 18px; border-radius: 10px; }
+  .biz-header .biz-name { font-size: 17px; }
+  .comp-table { font-size: 11px; }
 }
 </style>
 </head>
@@ -579,557 +147,418 @@
     <a href="index.html" class="logo">ONDA</a>
     <nav class="nav">
       <a href="check.html" class="active">무료 분석</a>
-      <a href="pricing.html">가격표</a>
-      <a href="trial.html" class="nav-cta">무료체험</a>
+      <a href="my.html">내 매장</a>
+      <a href="trial.html" class="nav-cta">체험신청</a>
     </nav>
     <button class="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
   </div>
   <div class="mobile-menu">
     <a href="index.html">홈</a>
     <a href="check.html">무료 분석</a>
-    <a href="pricing.html">가격표</a>
-    <a href="trial.html">무료체험</a>
     <a href="my.html">내 매장</a>
+    <a href="pricing.html">가격표</a>
+    <a href="trial.html">체험신청</a>
   </div>
 </header>
 
-<!-- ====== 1단계: 검색 ====== -->
+<!-- ====== 히어로 + 입력 ====== -->
 <section class="check-hero" id="heroSection">
   <div class="container">
+    <div class="check-badge">🔍 AdLog 실시간 데이터 기반</div>
     <h1>내 매장, 지금 몇 등일까?</h1>
-    <p class="hero-sub">매장명 또는 키워드를 입력하면 즉시 순위와 경쟁사를 분석해드립니다</p>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="매장명 또는 키워드 입력 (예: 강남 맛집, 블리독)" autofocus>
-      <button onclick="doSearch()">검색</button>
+    <p class="sub">네이버 플레이스 링크와 키워드를 입력하면<br>실시간 순위 + 경쟁사 분석을 무료로 제공합니다</p>
+
+    <div class="check-form">
+      <div class="check-field">
+        <label>📍 네이버 플레이스 링크 (선택)</label>
+        <input type="text" id="urlInput" placeholder="https://m.place.naver.com/place/12345678">
+        <div class="hint">플레이스 링크 또는 place ID만 입력해도 됩니다. 없으면 비워두세요.</div>
+      </div>
+      <div class="check-field">
+        <label>🔑 검색 키워드 (필수)</label>
+        <input type="text" id="kwInput" placeholder="예: 강남 맛집, 수원 커튼, 김포공항주차대행">
+      </div>
+      <button class="check-btn" id="checkBtn" onclick="doCheck()">🚀 실시간 분석하기</button>
     </div>
-    <p class="search-hint">91,000개 매장 데이터 기반 · 로그인 필요 없음</p>
   </div>
 </section>
 
-<!-- ====== 2단계: 검색 결과 목록 ====== -->
-<section class="results-section" id="resultsSection">
-  <div class="results-inner">
-    <div class="results-title" id="resultsTitle">검색 결과</div>
-    <div class="results-list" id="resultsList"></div>
-  </div>
+<!-- ====== 로딩 ====== -->
+<section class="loading-section" id="loadingSection">
+  <div class="spinner"></div>
+  <p style="font-size:16px;font-weight:600;color:var(--gray-900)">AdLog에서 실시간 데이터를 가져오고 있습니다...</p>
+  <p style="font-size:13px;color:var(--gray-500);margin-top:8px">최대 30초 소요될 수 있습니다</p>
 </section>
 
-<!-- ====== 3단계: 분석 리포트 ====== -->
-<section class="report-section" id="reportSection">
-  <div class="report-inner">
-    <button class="report-back" onclick="goBackToResults()">← 검색결과로 돌아가기</button>
+<!-- ====== 에러 ====== -->
+<div class="error-box" id="errorBox"></div>
 
-    <!-- 3-1. 헤더 카드 -->
-    <div class="report-header fade-up" id="reportHeader"></div>
+<!-- ====== 결과 ====== -->
+<section class="result-section" id="resultSection">
 
-    <!-- 3-2. 핵심 지표 -->
-    <div class="metric-grid fade-up" id="metricGrid"></div>
+  <!-- 헤더 카드 -->
+  <div class="biz-header" id="bizHeader"></div>
 
-    <!-- 3-3. 기간별 변동 -->
-    <div class="period-card fade-up">
-      <h3>기간별 변동</h3>
+  <!-- 지표 그리드 -->
+  <div class="metrics-grid" id="metricsGrid"></div>
+
+  <!-- 기간별 변동 -->
+  <div class="period-section" id="periodSection" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <p style="font-size:13px;font-weight:700;color:var(--gray-500)">기간별 변동</p>
       <div class="period-tabs" id="periodTabs"></div>
-      <div class="period-grid" id="periodGrid"></div>
     </div>
+    <div class="period-grid" id="periodGrid"></div>
+  </div>
 
-    <!-- 3-4. 추이 차트 -->
-    <div class="chart-card fade-up">
-      <h3>30일 추이</h3>
+  <!-- 차트 -->
+  <div class="chart-section" id="chartSection" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <p style="font-size:13px;font-weight:700;color:var(--gray-500)">추이 차트</p>
       <div class="chart-tabs">
-        <button class="chart-tab active" onclick="switchChart('n2')">N2 점수</button>
+        <button class="chart-tab active" onclick="switchChart('n2')">N2</button>
         <button class="chart-tab" onclick="switchChart('rank')">순위</button>
       </div>
-      <div class="chart-wrapper">
-        <canvas id="trendChart"></canvas>
-      </div>
     </div>
+    <div class="chart-wrap"><canvas id="histChart"></canvas></div>
+  </div>
 
-    <!-- 3-5. 경쟁사 비교 -->
-    <div class="comp-card fade-up">
-      <h3>같은 키워드 경쟁 매장 TOP 10</h3>
+  <!-- 경쟁사 -->
+  <div class="comp-section">
+    <h3>🏆 경쟁사 비교 (같은 키워드 TOP 10)</h3>
+    <div style="overflow-x:auto">
       <table class="comp-table" id="compTable">
-        <thead>
-          <tr><th>#</th><th>업체명</th><th>순위</th><th>N2</th><th>N2변동</th><th>리뷰</th><th>저장</th></tr>
-        </thead>
+        <thead><tr>
+          <th>#</th><th>업체명</th><th style="text-align:right">순위</th>
+          <th style="text-align:right">N2</th><th style="text-align:right">N2변동</th>
+          <th style="text-align:right">리뷰</th><th style="text-align:right">저장</th>
+        </tr></thead>
         <tbody id="compBody"></tbody>
       </table>
     </div>
+  </div>
 
-    <!-- 3-6. 진단 -->
-    <div class="diag-card fade-up" id="diagCard"></div>
+  <!-- 진단 -->
+  <div class="diag-card" id="diagCard"></div>
 
-    <!-- 3-7. CTA -->
-    <div class="cta-card fade-up">
-      <h3>ONDA가 올려드릴게요</h3>
-      <p>AI 기반 트래픽으로 평균 2주 내 5위 진입</p>
-      <div class="cta-buttons">
-        <a href="trial.html" class="btn-trial">무료 체험 시작 →</a>
-        <a href="http://pf.kakao.com/_xdbJnn/chat" target="_blank" class="btn-kakao">카카오 상담</a>
-      </div>
+  <!-- CTA -->
+  <div class="cta-card">
+    <h3>ONDA가 올려드릴게요</h3>
+    <p>AI 기반 트래픽으로 평균 2주 내 5위 진입 · 25일 보장</p>
+    <div class="cta-btns">
+      <a href="trial.html" class="cta-trial">무료 체험 시작 →</a>
+      <a href="http://pf.kakao.com/_xdbJnn/chat" target="_blank" class="cta-kakao">💬 카카오 상담</a>
     </div>
+  </div>
+
+  <!-- 다시 검색 -->
+  <div class="new-search">
+    <button onclick="resetCheck()">🔍 다른 매장 분석하기</button>
   </div>
 </section>
 
 <footer class="footer">
-  <div class="footer-inner">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <div class="logo">ONDA</div>
-        <p>AI 기반 네이버 플레이스 순위 관리 서비스</p>
-      </div>
-      <div class="footer-links">
-        <div>
-          <a href="index.html">홈</a>
-          <a href="pricing.html">가격표</a>
-          <a href="trial.html">무료체험</a>
-          <a href="check.html">무료 분석</a>
-        </div>
-        <div>
-          <a href="mailto:contact@onda.kr">contact@onda.kr</a>
-          <a href="http://pf.kakao.com/_xdbJnn/chat">카카오채널</a>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom">&copy; 2026 ONDA Marketing. All rights reserved.</div>
-  </div>
+  <div class="footer-inner"><div class="footer-bottom">&copy; 2026 ONDA Marketing</div></div>
 </footer>
 
-<script src="config.js"></script>
 <script src="app.js"></script>
 <script>
-// ====== 상태 ======
-var searchQuery = '';
-var searchResults = [];
-var selectedBiz = null;
-var snapshotData = [];
-var latestDate = null;
-var trendChart = null;
-var currentChartMode = 'n2';
+const API_URL = 'https://onda-logic-monitor.vercel.app/api/public/check';
+let chartInstance = null;
+let currentData = null;
 
-// ====== 1. 검색 ======
-document.getElementById('searchInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') doSearch();
-});
+function extractPlaceId(input) {
+  if (!input) return null;
+  const m = input.match(/place\/(\d+)/);
+  if (m) return m[1];
+  if (/^\d{5,}$/.test(input.trim())) return input.trim();
+  return null;
+}
 
-async function doSearch() {
-  var q = document.getElementById('searchInput').value.trim();
-  if (!q) return;
-  searchQuery = q;
+// 캐시 (1시간)
+function getCacheKey(kw, pid) { return 'onda_check_' + kw + '_' + (pid || ''); }
+function getCache(kw, pid) {
+  try {
+    const raw = localStorage.getItem(getCacheKey(kw, pid));
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (Date.now() - obj.ts > 3600000) { localStorage.removeItem(getCacheKey(kw, pid)); return null; }
+    return obj.data;
+  } catch { return null; }
+}
+function setCache(kw, pid, data) {
+  try { localStorage.setItem(getCacheKey(kw, pid), JSON.stringify({ ts: Date.now(), data })); } catch {}
+}
 
-  document.getElementById('resultsSection').style.display = 'block';
-  document.getElementById('reportSection').style.display = 'none';
-  document.getElementById('resultsList').innerHTML = '<div class="loading-spinner">검색 중...</div>';
-  document.getElementById('resultsTitle').textContent = '"' + q + '" 검색 결과';
+async function doCheck() {
+  const kw = document.getElementById('kwInput').value.trim();
+  const urlVal = document.getElementById('urlInput').value.trim();
+  const placeId = extractPlaceId(urlVal);
 
-  // 스크롤
-  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+  if (!kw) { showError('키워드를 입력해주세요.'); return; }
+
+  // 캐시 확인
+  const cached = getCache(kw, placeId);
+  if (cached) { renderResult(cached); return; }
+
+  showLoading(true);
+  hideError();
+
+  const params = new URLSearchParams({ keyword: kw });
+  if (placeId) params.set('place_id', placeId);
+  if (urlVal && !placeId) params.set('url', urlVal);
 
   try {
-    var encoded = encodeURIComponent(q);
-    var [businesses, keywords] = await Promise.all([
-      sbQuery('businesses?name=ilike.*' + encoded + '*&select=id,name,keyword_id,place_id,place_url&limit=20'),
-      sbQuery('keywords?keyword=ilike.*' + encoded + '*&select=id,keyword,region,business_type&limit=20')
-    ]);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 35000);
+    const res = await fetch(API_URL + '?' + params.toString(), { signal: controller.signal });
+    clearTimeout(timeout);
 
-    if (!Array.isArray(businesses)) businesses = [];
-    if (!Array.isArray(keywords)) keywords = [];
+    if (res.status === 429) { showError('요청이 너무 많습니다. 1분 후 다시 시도해주세요.'); showLoading(false); return; }
+    if (!res.ok) { showError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'); showLoading(false); return; }
 
-    // 키워드 매칭 매장도 가져오기
-    var kwIds = keywords.map(function(k) { return k.id; });
-    var kwBizzes = [];
-    if (kwIds.length > 0 && kwIds.length <= 20) {
-      kwBizzes = await sbQuery('businesses?keyword_id=in.(' + kwIds.join(',') + ')&select=id,name,keyword_id,place_id,place_url&limit=20');
-      if (!Array.isArray(kwBizzes)) kwBizzes = [];
+    const data = await res.json();
+    if (data.error && (!data.competitors || data.competitors.length === 0)) {
+      showError(data.error);
+      showLoading(false);
+      return;
     }
-
-    // 키워드 맵
-    var kwMap = {};
-    keywords.forEach(function(k) { kwMap[k.id] = k; });
-
-    // 매장 목록 합치기 (중복 제거)
-    var bizMap = {};
-    businesses.concat(kwBizzes).forEach(function(b) { bizMap[b.id] = b; });
-    var allBiz = Object.values(bizMap);
-
-    // 키워드 ID 목록 (매장에서 참조하는)
-    var needKwIds = allBiz.map(function(b) { return b.keyword_id; }).filter(function(id) { return id && !kwMap[id]; });
-    if (needKwIds.length > 0) {
-      var uniqueIds = [...new Set(needKwIds)];
-      if (uniqueIds.length <= 50) {
-        var extraKw = await sbQuery('keywords?id=in.(' + uniqueIds.join(',') + ')&select=id,keyword,region,business_type');
-        if (Array.isArray(extraKw)) {
-          extraKw.forEach(function(k) { kwMap[k.id] = k; });
-        }
-      }
-    }
-
-    // 결과 조합
-    searchResults = allBiz.map(function(b) {
-      var kw = kwMap[b.keyword_id];
-      return {
-        business: b,
-        keyword: kw || null
-      };
-    });
-
-    renderResults();
+    setCache(kw, placeId, data);
+    renderResult(data);
   } catch (err) {
-    document.getElementById('resultsList').innerHTML = '<div class="empty-state">검색 중 오류가 발생했습니다. 다시 시도해주세요.</div>';
+    if (err.name === 'AbortError') {
+      showError('서버 응답이 늦어지고 있습니다. 잠시 후 다시 시도해주세요.');
+    } else {
+      showError('네트워크 오류가 발생했습니다.');
+    }
+    showLoading(false);
   }
 }
 
-function renderResults() {
-  var list = document.getElementById('resultsList');
-  if (searchResults.length === 0) {
-    list.innerHTML = '<div class="empty-state">검색 결과가 없습니다. 다른 키워드로 시도해보세요.</div>';
-    return;
-  }
-  list.innerHTML = searchResults.map(function(r, i) {
-    var kwText = r.keyword ? r.keyword.keyword : '';
-    var regionText = r.keyword ? (r.keyword.region || '') : '';
-    var sub = [kwText, regionText].filter(Boolean).join(' · ');
-    return '<div class="result-card" onclick="selectBiz(' + i + ')">' +
-      '<div class="result-info"><h4>' + escHtml(r.business.name) + '</h4><span>' + escHtml(sub) + '</span></div>' +
-      '<div class="result-badge">분석하기</div></div>';
-  }).join('');
+function showLoading(on) {
+  document.getElementById('loadingSection').classList.toggle('active', on);
+  document.getElementById('resultSection').classList.remove('active');
+  document.getElementById('checkBtn').disabled = on;
+}
+function showError(msg) { const e = document.getElementById('errorBox'); e.textContent = msg; e.classList.add('active'); }
+function hideError() { document.getElementById('errorBox').classList.remove('active'); }
+
+function resetCheck() {
+  document.getElementById('heroSection').style.display = '';
+  document.getElementById('resultSection').classList.remove('active');
+  document.getElementById('loadingSection').classList.remove('active');
+  hideError();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ====== 2. 매장 선택 → 리포트 ======
-async function selectBiz(idx) {
-  selectedBiz = searchResults[idx];
-  if (!selectedBiz) return;
-
-  document.getElementById('resultsSection').style.display = 'none';
-  document.getElementById('reportSection').style.display = 'block';
+function renderResult(data) {
+  currentData = data;
+  showLoading(false);
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('resultSection').classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // 리포트 영역 로딩
-  document.getElementById('reportHeader').innerHTML = '<div class="loading-spinner">분석 데이터 로딩 중...</div>';
-  document.getElementById('metricGrid').innerHTML = '';
-  document.getElementById('periodTabs').innerHTML = '';
-  document.getElementById('periodGrid').innerHTML = '';
-  document.getElementById('compBody').innerHTML = '';
-  document.getElementById('diagCard').innerHTML = '';
-  if (trendChart) { trendChart.destroy(); trendChart = null; }
+  const my = data.my_business;
+  const comps = data.competitors || [];
+  const top1 = comps[0];
 
-  var bizId = selectedBiz.business.id;
-  var kwId = selectedBiz.business.keyword_id;
+  // 헤더
+  const mainBiz = my || top1;
+  if (mainBiz) {
+    const rankColor = mainBiz.rank <= 3 ? 'green' : mainBiz.rank <= 5 ? 'orange' : 'red';
+    const n2c = mainBiz.n2_change;
+    const n2cls = n2c > 0 ? 'n2-up' : n2c < 0 ? 'n2-down' : 'n2-flat';
+    const n2txt = n2c > 0 ? '▲ ' + n2c.toFixed(4) : n2c < 0 ? '▼ ' + Math.abs(n2c).toFixed(4) : '-';
+    const placeUrl = mainBiz.place_url || (mainBiz.place_id ? 'https://m.place.naver.com/place/' + mainBiz.place_id + '/home' : null);
 
-  try {
-    // 최신 날짜 확인
-    var dateRes = await sbQuery('daily_snapshots?order=snapshot_date.desc&limit=1&select=snapshot_date');
-    latestDate = (Array.isArray(dateRes) && dateRes.length > 0) ? dateRes[0].snapshot_date : '2026-03-15';
-
-    // 30일 스냅샷 + 경쟁사 동시 로드
-    var [snapshots, competitors] = await Promise.all([
-      sbQuery('daily_snapshots?business_id=eq.' + bizId + '&order=snapshot_date.desc&limit=30&select=*'),
-      kwId ? sbQuery('daily_snapshots?keyword_id=eq.' + kwId + '&snapshot_date=eq.' + latestDate + '&order=rank.asc&limit=10&select=*,businesses(name,place_id,place_url)') : Promise.resolve([])
-    ]);
-
-    if (!Array.isArray(snapshots)) snapshots = [];
-    if (!Array.isArray(competitors)) competitors = [];
-
-    snapshotData = snapshots;
-
-    // 키워드 정보
-    var kwInfo = selectedBiz.keyword;
-    if (!kwInfo && kwId) {
-      var kwRes = await sbQuery('keywords?id=eq.' + kwId + '&select=*');
-      if (Array.isArray(kwRes) && kwRes.length > 0) kwInfo = kwRes[0];
-    }
-
-    renderReport(kwInfo, competitors);
-  } catch (err) {
-    document.getElementById('reportHeader').innerHTML = '<div class="empty-state">데이터 로딩 중 오류가 발생했습니다.</div>';
+    document.getElementById('bizHeader').innerHTML =
+      '<div class="rank-badge ' + rankColor + '">' + mainBiz.rank + '</div>' +
+      '<div class="info">' +
+        '<div class="biz-name">' + mainBiz.name + (my ? ' <span style="font-size:12px;color:var(--primary)">내 매장</span>' : '') + '</div>' +
+        '<div class="biz-keyword">' + data.keyword + (data.snapshot_date ? ' · ' + data.snapshot_date : '') + '</div>' +
+        (placeUrl ? '<a class="place-link" href="' + placeUrl + '" target="_blank">네이버 플레이스 →</a>' : '') +
+      '</div>' +
+      '<span class="n2-badge ' + n2cls + '">' + n2txt + '</span>';
   }
-}
 
-// ====== 3. 리포트 렌더링 ======
-function renderReport(kwInfo, competitors) {
-  var latest = snapshotData[0] || {};
-  var prev = snapshotData[1] || {};
-  var biz = selectedBiz.business;
+  // 지표
+  if (mainBiz) {
+    const n2c = mainBiz.n2_change;
+    document.getElementById('metricsGrid').innerHTML =
+      metricHtml('N2 점수', mainBiz.n2_score?.toFixed(4) || '-', n2c, 'n2') +
+      metricHtml('블로그 리뷰', mainBiz.blog_review_count ?? '-', null) +
+      metricHtml('방문자 리뷰', mainBiz.visitor_review_count ?? '-', null) +
+      metricHtml('저장수', mainBiz.save_count ?? '-', null);
+  }
 
-  // 3-1. 헤더
-  var rank = latest.rank || '-';
-  var rankClass = rank <= 3 ? 'green' : rank <= 5 ? 'orange' : rank <= 50 ? 'red' : 'gray';
-  var n2c = latest.n2_change || 0;
-  var n2cClass = n2c > 0 ? 'up' : n2c < 0 ? 'down' : 'flat';
-  var n2cText = n2c > 0 ? '▲ ' + n2c.toFixed(1) : n2c < 0 ? '▼ ' + Math.abs(n2c).toFixed(1) : '- 0';
-  var kwText = kwInfo ? kwInfo.keyword : '';
-  var placeHtml = biz.place_url ? '<a href="' + escHtml(biz.place_url) + '" target="_blank" class="place-link">네이버 플레이스 →</a>' : '';
+  // 기간별 (히스토리 있을 때만)
+  const hist = data.history || [];
+  if (hist.length >= 2) {
+    document.getElementById('periodSection').style.display = '';
+    const periods = [1, 5, 10, 20, 30];
+    document.getElementById('periodTabs').innerHTML = periods.map((d, i) =>
+      '<button class="period-tab' + (i === 0 ? ' active' : '') + '" onclick="showPeriod(' + d + ',this)">' + d + '일</button>'
+    ).join('');
+    showPeriod(1, null);
+  } else {
+    document.getElementById('periodSection').style.display = 'none';
+  }
 
-  document.getElementById('reportHeader').innerHTML =
-    '<div class="rank-badge ' + rankClass + '">' + rank + '</div>' +
-    '<div class="report-header-info"><h2>' + escHtml(biz.name) + '</h2><span class="keyword-tag">' + escHtml(kwText) + '</span></div>' +
-    '<div class="report-header-right"><span class="n2-change ' + n2cClass + '">' + n2cText + '</span>' + placeHtml + '</div>';
+  // 차트
+  if (hist.length >= 2) {
+    document.getElementById('chartSection').style.display = '';
+    renderChart('n2');
+  } else {
+    document.getElementById('chartSection').style.display = 'none';
+  }
 
-  // 3-2. 핵심 지표
-  var metrics = [
-    { label: 'N2 점수', val: fmtNum(latest.n2_score), delta: calcDelta(latest.n2_score, prev.n2_score) },
-    { label: '블로그 리뷰', val: fmtInt(latest.blog_review_count), delta: calcDeltaInt(latest.blog_review_count, prev.blog_review_count) },
-    { label: '방문자 리뷰', val: fmtInt(latest.visitor_review_count), delta: calcDeltaInt(latest.visitor_review_count, prev.visitor_review_count) },
-    { label: '저장수', val: fmtInt(latest.save_count), delta: calcDeltaInt(latest.save_count, prev.save_count) }
-  ];
-  document.getElementById('metricGrid').innerHTML = metrics.map(function(m) {
-    return '<div class="metric-box"><div class="label">' + m.label + '</div><div class="value">' + m.val + '</div><div class="change ' + m.delta.cls + '">' + m.delta.text + '</div></div>';
+  // 경쟁사
+  const myPid = data.my_business?.place_id;
+  document.getElementById('compBody').innerHTML = comps.slice(0, 10).map((c, i) => {
+    const isMine = myPid && c.place_id === myPid;
+    const n2c = c.n2_change;
+    const n2cls = n2c > 0 ? 'diff-up' : n2c < 0 ? 'diff-down' : 'diff-flat';
+    const n2txt = n2c > 0 ? '▲' + n2c.toFixed(4) : n2c < 0 ? '▼' + Math.abs(n2c).toFixed(4) : '-';
+    const purl = c.place_url || (c.place_id ? 'https://m.place.naver.com/place/' + c.place_id + '/home' : null);
+    const nameHtml = purl ? '<a href="' + purl + '" target="_blank">' + c.name + '</a>' : c.name;
+    return '<tr class="' + (isMine ? 'mine' : '') + '">' +
+      '<td>' + (i + 1) + '</td>' +
+      '<td class="comp-name">' + nameHtml + '</td>' +
+      '<td style="text-align:right;font-weight:600">' + c.rank + '위</td>' +
+      '<td style="text-align:right">' + (c.n2_score?.toFixed(4) || '-') + '</td>' +
+      '<td style="text-align:right" class="' + n2cls + '">' + n2txt + '</td>' +
+      '<td style="text-align:right">' + ((c.blog_review_count || 0) + (c.visitor_review_count || 0)) + '</td>' +
+      '<td style="text-align:right">' + (c.save_count ?? '-') + '</td>' +
+      '</tr>';
   }).join('');
 
-  // 3-3. 기간별 변동
-  var periods = [1, 5, 10, 20, 30];
-  document.getElementById('periodTabs').innerHTML = periods.map(function(p, i) {
-    return '<button class="period-tab' + (i === 0 ? ' active' : '') + '" onclick="switchPeriod(' + p + ', this)">' + p + '일</button>';
-  }).join('');
-  switchPeriod(1);
+  // 진단
+  const top5 = comps.filter(c => c.rank <= 5);
+  const avgN2 = top5.length > 0 ? top5.reduce((s, c) => s + (c.n2_score || 0), 0) / top5.length : 0;
+  const myN2 = mainBiz?.n2_score || 0;
+  const myRank = mainBiz?.rank || 99;
+  const rankScore = myRank <= 1 ? 100 : myRank <= 3 ? 80 : myRank <= 5 ? 60 : myRank <= 10 ? 40 : 20;
+  const n2Score = avgN2 > 0 ? Math.min(100, Math.round((myN2 / avgN2) * 100)) : 50;
+  const healthScore = Math.round(rankScore * 0.5 + n2Score * 0.5);
+  const hLevel = healthScore >= 80 ? 'green' : healthScore >= 50 ? 'yellow' : 'red';
+  const hLabel = healthScore >= 80 ? '🟢 양호' : healthScore >= 50 ? '🟡 보통' : '🔴 위험';
+  const diagMsg = my
+    ? (healthScore >= 80 ? '현재 순위가 안정적입니다. 유지 관리를 권장합니다.'
+      : healthScore >= 50 ? '순위 상승 여지가 있습니다. 트래픽 투입으로 5위 이내 진입이 가능합니다.'
+      : '순위가 불안정합니다. 적극적인 트래픽 투입이 필요합니다.')
+    : '플레이스 링크를 입력하면 내 매장의 상세 진단을 받을 수 있습니다.';
 
-  // 3-4. 차트
-  renderChart('n2');
-
-  // 3-5. 경쟁사
-  renderCompetitors(competitors);
-
-  // 3-6. 진단
-  renderDiagnosis(latest, competitors);
+  document.getElementById('diagCard').innerHTML =
+    '<div class="health-score ' + hLevel + '">' + healthScore + '</div>' +
+    '<p style="font-size:18px;font-weight:700;margin-bottom:4px">' + hLabel + '</p>' +
+    (my ? '<p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">' + mainBiz.name + ' · ' + data.keyword + ' ' + myRank + '위</p>' : '') +
+    '<p class="diag-text">' + diagMsg + '</p>' +
+    (avgN2 > 0 ? '<p style="font-size:12px;color:var(--gray-400);margin-top:12px">TOP5 평균 N2: ' + avgN2.toFixed(4) + ' | 내 N2: ' + myN2.toFixed(4) + '</p>' : '');
 }
 
-// ====== 기간별 변동 ======
-function switchPeriod(days, btn) {
+function metricHtml(label, value, diff, fmt) {
+  let diffHtml = '';
+  if (diff != null && diff !== 0) {
+    const cls = diff > 0 ? 'diff-up' : 'diff-down';
+    const arrow = diff > 0 ? '▲' : '▼';
+    const val = fmt === 'n2' ? Math.abs(diff).toFixed(4) : Math.abs(diff);
+    diffHtml = '<div class="diff ' + cls + '">' + arrow + ' ' + val + '</div>';
+  }
+  return '<div class="metric-box"><div class="label">' + label + '</div><div class="value">' + value + '</div>' + diffHtml + '</div>';
+}
+
+function showPeriod(days, btn) {
   if (btn) {
-    document.querySelectorAll('.period-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
   }
-  var latest = snapshotData[0] || {};
-  var target = snapshotData[Math.min(days, snapshotData.length - 1)] || {};
+  const hist = currentData?.history || [];
+  if (hist.length < 2) return;
+  const latest = hist[hist.length - 1];
+  const idx = Math.max(0, hist.length - 1 - days);
+  const prev = hist[idx];
+  const rankChange = (prev.rank && latest.rank) ? prev.rank - latest.rank : null;
+  const n2Change = (prev.n2 != null && latest.n2 != null) ? latest.n2 - prev.n2 : null;
 
-  var rankFrom = target.rank || '-';
-  var rankTo = latest.rank || '-';
-  var rankDelta = (typeof latest.rank === 'number' && typeof target.rank === 'number') ? target.rank - latest.rank : null;
-
-  var n2From = target.n2_score != null ? Number(target.n2_score).toFixed(1) : '-';
-  var n2To = latest.n2_score != null ? Number(latest.n2_score).toFixed(1) : '-';
-  var n2Delta = (latest.n2_score != null && target.n2_score != null) ? (Number(latest.n2_score) - Number(target.n2_score)) : null;
-
-  // 종합
-  var summary = '—';
-  var sumClass = 'change-flat';
-  if (rankDelta !== null && n2Delta !== null) {
-    if (rankDelta > 0 && n2Delta > 0) { summary = '상승세'; sumClass = 'change-up'; }
-    else if (rankDelta < 0 && n2Delta < 0) { summary = '하락세'; sumClass = 'change-down'; }
-    else if (rankDelta > 0 || n2Delta > 0) { summary = '혼조'; sumClass = 'change-flat'; }
-    else if (rankDelta === 0 && n2Delta === 0) { summary = '유지'; sumClass = 'change-flat'; }
-    else { summary = '혼조'; sumClass = 'change-flat'; }
-  }
+  const rc = rankChange != null ? (rankChange > 0 ? 'diff-up' : rankChange < 0 ? 'diff-down' : 'diff-flat') : '';
+  const nc = n2Change != null ? (n2Change > 0 ? 'diff-up' : n2Change < 0 ? 'diff-down' : 'diff-flat') : '';
+  const overall = (rankChange > 0 && n2Change > 0) ? '<span class="diff-up">상승세 📈</span>'
+    : (rankChange < 0 && n2Change < 0) ? '<span class="diff-down">하락세 📉</span>'
+    : '<span class="diff-flat">혼조</span>';
 
   document.getElementById('periodGrid').innerHTML =
-    '<div class="period-cell"><div class="p-label">순위 변동</div><div class="p-from-to">' + rankFrom + ' → ' + rankTo + '</div><div class="p-delta ' + (rankDelta > 0 ? 'change-up' : rankDelta < 0 ? 'change-down' : 'change-flat') + '">' + (rankDelta !== null ? (rankDelta > 0 ? '▲' + rankDelta : rankDelta < 0 ? '▼' + Math.abs(rankDelta) : '-') : '-') + '</div></div>' +
-    '<div class="period-cell"><div class="p-label">N2 변동</div><div class="p-from-to">' + n2From + ' → ' + n2To + '</div><div class="p-delta ' + (n2Delta > 0 ? 'change-up' : n2Delta < 0 ? 'change-down' : 'change-flat') + '">' + (n2Delta !== null ? (n2Delta > 0 ? '+' + n2Delta.toFixed(1) : n2Delta < 0 ? n2Delta.toFixed(1) : '0') : '-') + '</div></div>' +
-    '<div class="period-cell"><div class="p-label">종합</div><div class="p-from-to">' + summary + '</div><div class="p-delta ' + sumClass + '">' + (days) + '일 기준</div></div>';
+    '<div class="period-cell"><div class="p-label">순위</div><div class="p-value ' + rc + '">' + (latest.rank || '-') + '위</div><div class="p-from">' + (prev.rank || '-') + '위에서</div></div>' +
+    '<div class="period-cell"><div class="p-label">N2</div><div class="p-value ' + nc + '">' + (latest.n2?.toFixed(4) || '-') + '</div><div class="p-from">' + (prev.n2?.toFixed(4) || '-') + '에서</div></div>' +
+    '<div class="period-cell"><div class="p-label">종합</div><div class="p-value">' + overall + '</div></div>';
 }
 
-// ====== 차트 ======
 function switchChart(mode) {
-  currentChartMode = mode;
-  document.querySelectorAll('.chart-tab').forEach(function(t) { t.classList.remove('active'); });
-  document.querySelectorAll('.chart-tab').forEach(function(t) {
-    if ((mode === 'n2' && t.textContent.includes('N2')) || (mode === 'rank' && t.textContent.includes('순위'))) t.classList.add('active');
-  });
+  document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
   renderChart(mode);
 }
 
 function renderChart(mode) {
-  if (trendChart) { trendChart.destroy(); trendChart = null; }
-  var ctx = document.getElementById('trendChart').getContext('2d');
+  const hist = currentData?.history || [];
+  if (hist.length < 2) return;
 
-  var sorted = snapshotData.slice().reverse();
-  var labels = sorted.map(function(s) {
-    var d = s.snapshot_date || '';
-    return d.substring(5); // MM-DD
-  });
-  var values = sorted.map(function(s) {
-    return mode === 'n2' ? Number(s.n2_score || 0) : Number(s.rank || 0);
-  });
+  if (chartInstance) chartInstance.destroy();
+  const ctx = document.getElementById('histChart').getContext('2d');
+  const labels = hist.map(h => h.date?.slice(5) || '');
+  const values = mode === 'n2' ? hist.map(h => h.n2) : hist.map(h => h.rank);
 
-  var isRank = mode === 'rank';
-
-  trendChart = new Chart(ctx, {
+  const config = {
     type: 'line',
     data: {
-      labels: labels,
+      labels,
       datasets: [{
-        label: isRank ? '순위' : 'N2 점수',
         data: values,
-        borderColor: isRank ? '#EF4444' : '#10B981',
-        backgroundColor: isRank ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)',
-        borderWidth: 2.5,
-        fill: true,
-        tension: 0.3,
-        pointRadius: 2,
-        pointHoverRadius: 5
+        borderColor: mode === 'n2' ? '#10B981' : '#6366F1',
+        backgroundColor: mode === 'n2' ? 'rgba(16,185,129,0.08)' : 'rgba(99,102,241,0.08)',
+        fill: true, borderWidth: 2, pointRadius: 0, tension: 0.3,
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1A1A2E',
-          titleFont: { size: 12 },
-          bodyFont: { size: 13, weight: '600' },
-          padding: 10,
-          cornerRadius: 8
-        }
-      },
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
       scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#9CA3AF', maxTicksLimit: 7 } },
         y: {
-          reverse: isRank,
-          grid: { color: 'rgba(0,0,0,0.04)' },
-          ticks: { font: { size: 12 } },
-          ...(isRank ? {} : { beginAtZero: false })
-        },
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 11 }, maxTicksLimit: 8 }
+          reverse: mode === 'rank',
+          grid: { color: '#F3F4F6' },
+          ticks: { font: { size: 10 }, color: '#9CA3AF' },
         }
       },
-      ...(isRank ? {
-        plugins: {
-          legend: { display: false },
-          annotation: false
-        }
-      } : {})
+      interaction: { intersect: false, mode: 'index' },
     },
-    plugins: isRank ? [{
-      id: 'rankLine',
-      afterDraw: function(chart) {
-        var yScale = chart.scales.y;
-        var xScale = chart.scales.x;
-        if (yScale && typeof yScale.getPixelForValue === 'function') {
-          var y5 = yScale.getPixelForValue(5);
-          var ctx2 = chart.ctx;
-          ctx2.save();
-          ctx2.setLineDash([6, 4]);
-          ctx2.strokeStyle = '#EF4444';
-          ctx2.lineWidth = 1;
-          ctx2.globalAlpha = 0.5;
-          ctx2.beginPath();
-          ctx2.moveTo(xScale.left, y5);
-          ctx2.lineTo(xScale.right, y5);
-          ctx2.stroke();
-          ctx2.restore();
-          // 라벨
-          ctx2.save();
-          ctx2.fillStyle = '#EF4444';
-          ctx2.globalAlpha = 0.6;
-          ctx2.font = '11px Pretendard, sans-serif';
-          ctx2.fillText('5위', xScale.right + 4, y5 + 4);
-          ctx2.restore();
+    plugins: mode === 'rank' ? [{
+      id: 'refLine',
+      afterDraw(chart) {
+        const y5 = chart.scales.y.getPixelForValue(5);
+        if (y5) {
+          const ctx = chart.ctx;
+          ctx.save();
+          ctx.setLineDash([6, 3]);
+          ctx.strokeStyle = '#EF4444';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(chart.chartArea.left, y5);
+          ctx.lineTo(chart.chartArea.right, y5);
+          ctx.stroke();
+          ctx.fillStyle = '#EF4444';
+          ctx.font = '10px Pretendard';
+          ctx.fillText('5위', chart.chartArea.right + 4, y5 + 4);
+          ctx.restore();
         }
       }
     }] : []
-  });
+  };
+  chartInstance = new Chart(ctx, config);
 }
 
-// ====== 경쟁사 ======
-function renderCompetitors(comps) {
-  var tbody = document.getElementById('compBody');
-  if (!comps || comps.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:24px">경쟁사 데이터가 없습니다</td></tr>';
-    return;
-  }
-  var myBizId = selectedBiz.business.id;
-  tbody.innerHTML = comps.map(function(c, i) {
-    var isMe = c.business_id === myBizId;
-    var bizName = (c.businesses && c.businesses.name) || '매장 #' + c.business_id;
-    var placeId = c.businesses && c.businesses.place_id;
-    var placeUrl = c.businesses && c.businesses.place_url;
-    var link = placeUrl ? '<a href="' + escHtml(placeUrl) + '" target="_blank" class="biz-link">↗</a>' : '';
-    var n2c = c.n2_change || 0;
-    var n2cHtml = n2c > 0 ? '<span class="change-up">▲' + n2c.toFixed(1) + '</span>' : n2c < 0 ? '<span class="change-down">▼' + Math.abs(n2c).toFixed(1) + '</span>' : '<span class="change-flat">-</span>';
-    var reviews = (c.blog_review_count || 0) + (c.visitor_review_count || 0);
-    return '<tr class="' + (isMe ? 'me' : '') + '"><td>' + (i + 1) + '</td><td>' + escHtml(bizName) + link + '</td><td>' + (c.rank || '-') + '</td><td>' + fmtNum(c.n2_score) + '</td><td>' + n2cHtml + '</td><td>' + fmtInt(reviews) + '</td><td>' + fmtInt(c.save_count) + '</td></tr>';
-  }).join('');
-}
-
-// ====== 진단 ======
-function renderDiagnosis(latest, competitors) {
-  var card = document.getElementById('diagCard');
-  var myRank = latest.rank || 99;
-  var myN2 = Number(latest.n2_score || 0);
-
-  // TOP 5 평균 N2
-  var top5 = (competitors || []).filter(function(c) { return c.rank && c.rank <= 5; });
-  var avgN2 = 0;
-  if (top5.length > 0) {
-    avgN2 = top5.reduce(function(s, c) { return s + Number(c.n2_score || 0); }, 0) / top5.length;
-  }
-
-  // 건강도 점수
-  var rankScore = myRank <= 5 ? 100 : myRank <= 10 ? 70 : myRank <= 20 ? 40 : 20;
-  var n2Ratio = avgN2 > 0 ? Math.min((myN2 / avgN2) * 100, 100) : 50;
-  var healthScore = Math.round(rankScore * 0.5 + n2Ratio * 0.5);
-  healthScore = Math.max(0, Math.min(100, healthScore));
-
-  var healthColor, healthLabel, healthEmoji;
-  if (healthScore >= 80) { healthColor = '#10B981'; healthLabel = '양호'; healthEmoji = '\uD83D\uDFE2'; }
-  else if (healthScore >= 50) { healthColor = '#F59E0B'; healthLabel = '보통'; healthEmoji = '\uD83D\uDFE1'; }
-  else { healthColor = '#EF4444'; healthLabel = '위험'; healthEmoji = '\uD83D\uDD34'; }
-
-  var tips = '';
-  if (myRank > 5) {
-    tips = '현재 순위가 5위 밖에 있습니다. 네이버 플레이스 순위는 N2 점수(블로그 리뷰, 방문자 리뷰, 저장수 등의 종합 지표)에 의해 결정됩니다. 리뷰 수와 저장수를 늘리면 N2 점수가 올라가고 자연스럽게 순위가 상승합니다.';
-  } else {
-    tips = '현재 상위 5위 안에 위치해 있습니다. 순위를 유지하려면 꾸준한 리뷰 관리와 고객 유입이 중요합니다. N2 점수 변동을 주기적으로 확인하세요.';
-  }
-
-  card.innerHTML =
-    '<h3>내 매장 순위 진단</h3>' +
-    '<div class="diag-grid">' +
-      '<div class="diag-item"><div class="d-label">현재 순위</div><div class="d-value" style="color:' + (myRank <= 5 ? '#10B981' : '#EF4444') + '">' + myRank + '위</div></div>' +
-      '<div class="diag-item"><div class="d-label">TOP 5 평균 N2</div><div class="d-value">' + avgN2.toFixed(1) + '</div></div>' +
-      '<div class="diag-item"><div class="d-label">내 N2</div><div class="d-value">' + myN2.toFixed(1) + '</div></div>' +
-    '</div>' +
-    '<div class="health-label">' + healthEmoji + ' 건강도: ' + healthScore + '점 (' + healthLabel + ')</div>' +
-    '<div class="health-bar"><div class="health-fill" style="width:' + healthScore + '%;background:' + healthColor + '"></div></div>' +
-    '<div class="diag-text">' + tips + '</div>';
-}
-
-// ====== 네비게이션 ======
-function goBackToResults() {
-  document.getElementById('reportSection').style.display = 'none';
-  document.getElementById('resultsSection').style.display = 'block';
-  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
-}
-
-// ====== 유틸 ======
-function escHtml(s) {
-  if (!s) return '';
-  var d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-function fmtNum(v) {
-  if (v == null) return '-';
-  return Number(v).toFixed(1);
-}
-function fmtInt(v) {
-  if (v == null) return '-';
-  return Number(v).toLocaleString();
-}
-function calcDelta(cur, prev) {
-  if (cur == null || prev == null) return { text: '-', cls: 'change-flat' };
-  var d = Number(cur) - Number(prev);
-  if (d > 0) return { text: '+' + d.toFixed(1), cls: 'change-up' };
-  if (d < 0) return { text: d.toFixed(1), cls: 'change-down' };
-  return { text: '0', cls: 'change-flat' };
-}
-function calcDeltaInt(cur, prev) {
-  if (cur == null || prev == null) return { text: '-', cls: 'change-flat' };
-  var d = Number(cur) - Number(prev);
-  if (d > 0) return { text: '+' + d, cls: 'change-up' };
-  if (d < 0) return { text: '' + d, cls: 'change-down' };
-  return { text: '0', cls: 'change-flat' };
-}
+// Enter키로 검색
+document.getElementById('kwInput').addEventListener('keydown', e => { if (e.key === 'Enter') doCheck(); });
+document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('kwInput').focus(); });
 </script>
 </body>
 </html>
